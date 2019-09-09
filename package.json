@@ -1,0 +1,66 @@
+{
+    "name": "@yagura/http",
+    "version": "0.0.1",
+    "description": "HTTP package for Yagura",
+    "main": "lib/index.js",
+    "types": "lib/index.d.ts",
+    "scripts": {
+        "clean": "rm -rf ./lib",
+        "build": "./node_modules/typescript/bin/tsc",
+        "test": "NODE_ENV=test ./node_modules/ts-mocha/bin/ts-mocha ./src/**/*.test.ts",
+        "apidoc:gen": "./node_modules/gulp/bin/gulp.js apidoc:gen",
+        "apidoc:serve": "./node_modules/http-serve/bin/http-serve ./docs -p 8091"
+    },
+    "files": [
+        "LICENSE",
+        "README.md",
+        "lib/"
+    ],
+    "author": "James Kerber <kerberjg@mekomidev.com>",
+    "license": "GPL-3.0-only",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mekomidev/yagura-http.git"
+    },
+    "engines": {
+        "node": ">=10.16.3"
+    },
+    "devDependencies": {
+        "@types/mocha": "^5.2.5",
+        "@types/sinon": "^7.0.3",
+        "expect.js": "^0.3.1",
+        "http-serve": "^1.0.1",
+        "mocha": "^6.0.2",
+        "run-sequence": "^2.2.1",
+        "sinon": "^7.2.2",
+        "supertest": "^4.0.2",
+        "typescript": "^3.5.1",
+        "tslint": "^5.17.0",
+        "ts-mocha": "^6.0.0",
+        "ts-node": "^8.2.0"
+    },
+    "dependencies": {
+        "@types/body-parser": "^1.17.0",
+        "@types/expect.js": "^0.3.29",
+        "@types/express": "^4.16.0",
+        "@types/moment": "^2.13.0",
+        "@types/node": "^12.0.4",
+        "@types/semver": "^6.0.2",
+        "@types/winston": "^2.3.9",
+
+        "@yagura/yagura": "<=0.1.0",
+
+        "ajv": "^6.10.2",
+        "body-parser": "^1.18.3",
+        "clarify": "^2.1.0",
+        "colors": "^1.3.3",
+        "config": "^3.0.1",
+        "express": "^4.16.4",
+        "express-async-errors": "^3.1.1",
+        "find-my-way": "^2.1.0",
+        "moment": "^2.23.0",
+        "passport": "^0.4.0",
+        "semver": "6.3.0",
+        "winston": "^3.1.0"
+    }
+}

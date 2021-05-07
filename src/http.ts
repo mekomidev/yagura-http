@@ -10,7 +10,7 @@ export interface HttpEventData {
 
 /**
  * A [YaguraEvent] subclass representing a HTTP request.
- * Incapsules [req] and [res] objects in order to pass them through the overlay stack.
+ * Incapsules [req] and [res] objects in order to pass them through the Layer stack.
  */
 export class HttpRequest extends YaguraEvent implements HttpEventData {
     protected readonly data: HttpEventData;

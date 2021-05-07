@@ -1,9 +1,8 @@
-import { Yagura, Overlay, Logger, YaguraError, eventFilter } from '@yagura/yagura';
+import { Yagura, Layer, Logger, YaguraError, eventFilter } from '@yagura/yagura';
 
 import { HttpError, HttpErrorType } from './errors/http.error';
 import { HttpRequest, HttpRouter } from './http';
 
-import * as SemVer from 'semver';
 import { FmwRouter } from './routers/fmw.router';
 
 export interface HttpApiConfig {
@@ -15,17 +14,17 @@ export interface HttpApiConfig {
 /**
  * Abstract HTTP router definition.
  *
- * In a Yagura application with a HttpServerOverlay mounted,
- * the HttpApiOverlay (mounted afterwards) receives the HTTP requests
+ * In a Yagura application with a HttpServerLayer mounted,
+ * the HttpApiLayer (mounted afterwards) receives the HTTP requests
  * and routes them per user's definition.
  */
-export abstract class HttpApiOverlay extends Overlay {
+export abstract class HttpApiLayer extends Layer {
     public readonly config: HttpApiConfig;
 
     private _router: HttpRouter;
 
-    constructor(name: string, config: HttpApiConfig, yaguraVersion?: SemVer.Range) {
-        super(name, config, yaguraVersion);
+    constructor(name: string, config: HttpApiConfig) {
+        super(name, config);
 
         try {
             // TODO: decouple FmwRouter from here, set as default, but allow specifying a custom router
@@ -33,7 +32,7 @@ export abstract class HttpApiOverlay extends Overlay {
             this.declareRoutes(this._router);
 
             if (process.env.NODE_ENV !== 'production') {
-                (Yagura.getModule('Logger') as Logger).debug("[HTTP]".green.bold + ` routes declared;\n` + this._router.prettyPrint().dim);
+                (this.yagura.getService('Logger') as Logger).debug("[HTTP]".green.bold + ` routes declared;\n` + this._router.prettyPrint().dim);
             }
         } catch (err) {
             throw err;
@@ -56,7 +55,7 @@ export abstract class HttpApiOverlay extends Overlay {
 
         if (this.config.options.debugTime) {
             const time = endTime - startTime;
-            (Yagura.getModule('Logger') as Logger).verbose("[HTTP]".green.bold + ` ${event.req.method.toUpperCase().bold} ${event.req.path} ` + `[${time}ms]`.dim);
+            (this.yagura.getService('Logger') as Logger).verbose("[HTTP]".green.bold + ` ${event.req.method.toUpperCase().bold} ${event.req.path} ` + `[${time}ms]`.dim);
         }
 
         // Pass HTTP event further down if not handled

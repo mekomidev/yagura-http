@@ -1,4 +1,4 @@
-import { Yagura, Overlay, Logger, YaguraError, eventFilter } from '@yagura/yagura';
+import { Yagura, Service, Logger, YaguraEvent, eventFilter } from '@yagura/yagura';
 import { HttpError, HttpErrorType } from './errors/http.error';
 import { HttpRequest } from './http';
 
@@ -16,25 +16,23 @@ export interface HttpServerConfig {
 }
 
 /**
- * Express.js-based HTTP server overlay.
+ * Express.js-based HTTP server Layer.
  * Starts a HTTP server on the given port with the given configuration and middleware,
- * and dispatches [HttpRequest] events through Yagura, to be handled by [HttpApiOverlay] instances.
+ * and dispatches [HttpRequest] events through Yagura, to be handled by [HttpApiLayer] instances.
  */
-export class HttpServerOverlay extends Overlay {
+export class HttpServerService extends Service {
     public readonly config: HttpServerConfig;
 
     private logger: Logger;
     private _express: ExpressApp;
-    private _expressMiddleware: [() => RequestHandler];
 
-    /** Initializes the overlay
+    /** Initializes the Layer
      *
-     * @param {HttpOverlayConfig} config
+     * @param {HttpLayerConfig} config
      * @param {[() => RequestHandler]} middleware Ordered array of Express.js middleware factory functions to be mounted
      */
-    constructor(config: HttpServerConfig, middleware?: [() => RequestHandler]) {
-        super('HttpServer', config);
-        this._expressMiddleware = middleware || [] as any;
+    constructor(config: HttpServerConfig) {
+        super('HttpServer', 'yagura');
 
         // Initialize all defined error types
         if (this.config.errorCodes && this.config.errorCodes.length > 0) {
@@ -46,7 +44,7 @@ export class HttpServerOverlay extends Overlay {
 
     /** Creates an Express app instance and starts a HTTP server */
     public async initialize() {
-        this.logger = Yagura.getModule('Logger');
+        this.logger = this.yagura.getService('Logger');
 
         if (this._express) {
             throw new Error('This strategy has already been started');
@@ -58,9 +56,7 @@ export class HttpServerOverlay extends Overlay {
         const app: ExpressApp = express();
         // Attach middleware
         require('express-async-errors');
-        for (const m of this._expressMiddleware) {
-            app.use(m());
-        }
+        
         // Apply settings
         for (const key in this.config.expressSettings) {
             if (this.config.expressSettings.hasProperty(key)) {
@@ -70,7 +66,7 @@ export class HttpServerOverlay extends Overlay {
 
         // Pass events to Yagura
         app.use((req, res) => {
-            Yagura.dispatch(new HttpRequest({ req, res }));
+            this.yagura.dispatch(new HttpRequest({ req, res }));
         });
 
         // Set up error handling
@@ -91,9 +87,9 @@ export class HttpServerOverlay extends Overlay {
 
             res.end();
 
-            // Calls Overlay's error handler
+            // Calls Layer's error handler
             try {
-                await Yagura.handleError(err);
+                await this.yagura.handleError(err);
             } catch {
                 // ...but carefully, never trust devs, what if THAT crashes?
                 this.logger.error(`Yo, seriously?`);
@@ -108,7 +104,7 @@ export class HttpServerOverlay extends Overlay {
         await new Promise((resolve, reject) => {
             this._express.listen(port, () => {
                 this.logger.info(`Server listening on port`.green + ` ${port}`.bold);
-                resolve();
+                resolve(true);
             });
         });
     }

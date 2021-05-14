@@ -1,6 +1,5 @@
-import { Yagura, Logger } from '@yagura/yagura';
-
-import { HttpRequest, HttpRoute, HttpRouter, HttpMethod, HttpRouteCallback } from '../http';
+import { HttpRequest } from '../request';
+import { HttpRoute, HttpRouter, HttpMethod, HttpRouteCallback } from '../routes';
 
 import * as path from 'path';
 import * as FindMyWay from 'find-my-way';
@@ -38,19 +37,14 @@ export class FmwRouter<V extends FindMyWay.HTTPVersion = FindMyWay.HTTPVersion.V
     }
 
     public async handle(event: HttpRequest): Promise<boolean> {
-        const method = event.req.method;
-        const routePath = event.req.path;   // TODO: sanitize path
+        const method = event.data.req.method;
+        const routePath = event.data.req.path;   // TODO: sanitize path
 
         const routeResult = this._fmw.find(method as FindMyWay.HTTPMethod, routePath);
         if (!!routeResult && !!routeResult.handler) {
             const handler: HttpRouteCallback = routeResult.handler as any as HttpRouteCallback;     // dangerous!
 
-            try {
-                await handler(event);
-            } catch (err) {
-                (Yagura.getModule('Logger') as Logger).error("[HTTP]".red.bold + ` ${method} ${routePath} responded with an error:\n${err.stack}`);
-                await event.sendError(err);
-            }
+            await handler(event);
 
             return true;
         } else {

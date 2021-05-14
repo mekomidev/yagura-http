@@ -1,62 +1,4 @@
-import { YaguraEvent } from '@yagura/yagura';
-import { HttpError, HttpErrorType } from './errors/http.error';
-
-import { Response, Request } from 'express';
-
-export interface HttpEventData {
-    req: Request;
-    res: Response;
-}
-
-/**
- * A [YaguraEvent] subclass representing a HTTP request.
- * Incapsules [req] and [res] objects in order to pass them through the Layer stack.
- */
-export class HttpRequest extends YaguraEvent implements HttpEventData {
-    protected readonly data: HttpEventData;
-
-    // Incoming data
-    public readonly req: Request;
-    public readonly res: Response;
-
-    constructor(data: HttpEventData) {
-        super(data);
-        this.req = data.req;
-        this.res = data.res;
-    }
-
-    // Response methods
-    /**
-     * Send a response to this [HttpRequest]
-     *
-     * @param {Number} status HTTP status code to respond with
-     * @param {any} data HTTP response body contents
-     */
-    public async send(status: number, data?: any): Promise<Response> {
-        this.res.status(status).send(data).end();
-        return this.res;
-    }
-
-    /**
-     * Send a response to this [HttpRequest] based on an [Error]
-     *
-     * @param {Error} err The error to be parsed into a response
-     */
-    public async sendError(err: Error): Promise<Response> {
-        if (err instanceof HttpError) {
-            this.res.status(err.type.code).send(err.type.type).end();
-        } else {
-            // TODO: consider not sending the stack when in productioj
-            this.res.status(500).send(err.stack).end();
-        }
-
-        return this.res;
-    }
-}
-
-/*
- *      HTTP routing stuff
- */
+import { HttpRequest } from './request';
 
 export class HttpRouteFormattingError extends Error {}
 
@@ -96,11 +38,11 @@ export abstract class HttpRoute {
      * All error handling should be taken care of according to HTTP REST API standards.
      *
      * Example:
-     *  GET .../        => model.getAll(query);
-     *  GET .../id      => model.get(id);
-     *  POST .../       => model.create(data);
-     *  PUT .../id      => model.update(id, data);
-     *  DELETE .../id   => model.delete(id);
+     * GET .../        => model.getAll(query);
+     * GET .../id      => model.get(id);
+     * POST .../       => model.create(data);
+     * PUT .../id      => model.update(id, data);
+     * DELETE .../id   => model.delete(id);
      *
      * @param {CrudAdapter} model a CRUD model adapter to mount as a resource
      *
@@ -109,32 +51,32 @@ export abstract class HttpRoute {
     public model<D>(model: CrudAdapter<D>): HttpRoute {
         // GET many
         this.get(async (event: HttpRequest) => {
-            const res = await model.getMany(event.req.query);
-            event.res.status(res.code).send(res.data);
+            const res = await model.getMany(event.data.req.query);
+            event.data.res.status(res.code).send(res.data);
         });
 
         // GET one
         this.route('/:id').get(async (event: HttpRequest) => {
-            const res = await model.getOne(event.req.params.id);
-            event.res.status(res.code).send(res.data);
+            const res = await model.getOne(event.data.req.params.id);
+            event.data.res.status(res.code).send(res.data);
         });
 
         // POST (create)
         this.post(async (event) => {
-            const res = await model.create(event.req.body);
-            event.res.status(res.code).send(res.data);
+            const res = await model.create(event.data.req.body);
+            event.data.res.status(res.code).send(res.data);
         });
 
         // PUT (update)
         this.route('/:id').put(async (event) => {
-            const res = await model.update(event.req.params.id, event.req.query);
-            event.res.status(res.code).send(res.data);
+            const res = await model.update(event.data.req.params.id, event.data.req.query as any);
+            event.data.res.status(res.code).send(res.data);
         });
 
         // DELETE one
         this.route('/:id').delete(async (event) => {
-            const res = await model.delete(event.req.params.id);
-            event.res.status(res.code).send(res.data);
+            const res = await model.delete(event.data.req.params.id);
+            event.data.res.status(res.code).send(res.data);
         });
 
         return this;
@@ -158,7 +100,7 @@ export abstract class HttpRouter {
      *
      * @returns {boolean} whether an appropriate route was found in the tree
      */
-    public abstract async handle(event: HttpRequest): Promise<boolean>;
+    public abstract handle(event: HttpRequest): Promise<boolean>;
 
     public abstract prettyPrint(): string;
 }

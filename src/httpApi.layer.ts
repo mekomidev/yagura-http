@@ -1,9 +1,11 @@
 import { Yagura, Layer, Logger, YaguraError, eventFilter } from '@yagura/yagura';
 
 import { HttpError, HttpErrorType } from './errors/http.error';
-import { HttpRequest, HttpRouter } from './http';
-
+import { HttpRouter } from './routes';
+import { HttpRequest } from './request';
 import { FmwRouter } from './routers/fmw.router';
+
+import * as colors from 'colors/safe';
 
 export interface HttpApiConfig {
     options: {
@@ -20,11 +22,12 @@ export interface HttpApiConfig {
  */
 export abstract class HttpApiLayer extends Layer {
     public readonly config: HttpApiConfig;
+    public static readonly DEFAULT_CONFIGS: HttpApiConfig = Object.freeze({ options: { debugTime: true }});
 
     private _router: HttpRouter;
 
-    constructor(name: string, config: HttpApiConfig) {
-        super(name, config);
+    constructor(config?: HttpApiConfig) {
+        super(config ?? HttpApiLayer.DEFAULT_CONFIGS);
 
         try {
             // TODO: decouple FmwRouter from here, set as default, but allow specifying a custom router
@@ -32,7 +35,7 @@ export abstract class HttpApiLayer extends Layer {
             this.declareRoutes(this._router);
 
             if (process.env.NODE_ENV !== 'production') {
-                (this.yagura.getService('Logger') as Logger).debug("[HTTP]".green.bold + ` routes declared;\n` + this._router.prettyPrint().dim);
+                // this.yagura.getService<Logger>('Logger').debug("[HTTP]".green.bold + ` routes declared;\n` + this._router.prettyPrint().dim);
             }
         } catch (err) {
             throw err;
@@ -49,13 +52,19 @@ export abstract class HttpApiLayer extends Layer {
 
     @eventFilter([HttpRequest])
     public async handleEvent(event: HttpRequest): Promise<HttpRequest> {
-        const startTime = Date.now();
-        const handled: boolean = await this._router.handle(event);
-        const endTime = Date.now();
+        let handled: boolean;
 
-        if (this.config.options.debugTime) {
-            const time = endTime - startTime;
-            (this.yagura.getService('Logger') as Logger).verbose("[HTTP]".green.bold + ` ${event.req.method.toUpperCase().bold} ${event.req.path} ` + `[${time}ms]`.dim);
+        try {
+            const startTime = Date.now();
+            handled = await this._router.handle(event);
+            const time = Date.now() - startTime;
+
+            if (this.config.options.debugTime && handled) {
+                this.yagura.getService<Logger>('Logger').verbose(colors.green("[HTTP]") + ` ${colors.bold(event.data.req.method)} ${event.data.res.statusCode.toString().dim} ${event.data.req.path} ` + `[${time}ms]`.dim);
+            }
+        } catch (err) {
+            this.yagura.getService<Logger>('Logger').error(colors.red("[HTTP]") + ` ${event.data.req.method} ${event.data.req.path} responded with an error:\n${(err as Error).stack.toString().dim}`);
+            if(event.canSend) await event.sendError(err);
         }
 
         // Pass HTTP event further down if not handled

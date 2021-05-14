@@ -106,7 +106,7 @@ export class HttpError extends Error {
         }
 
         if (!error) {
-            throw new Error(`Unknown error type "${errorType}"`);
+            throw new Error(`Unknown error type "${errorType.toString()}"`);
         }
 
         // Compose error string

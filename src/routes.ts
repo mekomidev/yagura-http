@@ -4,7 +4,7 @@ export class HttpRouteFormattingError extends Error {}
 
 export type HttpRouteCallback = (event: HttpRequest) => Promise<void>;
 
-export type HttpMethod = 'all' | 'head' | 'get' | 'post' | 'put' | 'delete';
+export type HttpMethod = 'ALL' | 'HEAD' | 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 export abstract class HttpRoute {
     /** Path relative to the route this route is mounted on */
@@ -23,15 +23,15 @@ export abstract class HttpRoute {
     /** Assigns a callback to a specified HTTP method on this route */
     public abstract method(method: HttpMethod, handler: HttpRouteCallback): void;
     /** Attaches a callback to all HTTP methods on this route */
-    public all(cb: HttpRouteCallback) { this.method('all', cb); }
+    public all(cb: HttpRouteCallback) { this.method('ALL', cb); }
     /** Attaches a callback to the HTTP GET method on this route */
-    public get(cb: HttpRouteCallback) { this.method('get', cb); }
+    public get(cb: HttpRouteCallback) { this.method('GET', cb); }
     /** Attaches a callback to the HTTP PUT method on this route */
-    public put(cb: HttpRouteCallback) { this.method('put', cb); }
+    public put(cb: HttpRouteCallback) { this.method('PUT', cb); }
     /** Attaches a callback to the HTTP POST method on this route */
-    public post(cb: HttpRouteCallback) { this.method('post', cb); }
+    public post(cb: HttpRouteCallback) { this.method('POST', cb); }
     /** Attaches a callback to the HTTP DELETE method on this route */
-    public delete(cb: HttpRouteCallback) { this.method('delete', cb); }
+    public delete(cb: HttpRouteCallback) { this.method('DELETE', cb); }
 
     /**
      * Mounts a model with CrudAdapter on current route and attaches CRUD handlers to HTTP methods and relevant subroutes.

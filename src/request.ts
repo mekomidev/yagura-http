@@ -32,7 +32,7 @@ export class HttpRequest extends YaguraEvent {
             throw new Error("HTTP headers have already been written");
         }
 
-        this.data.res.writeHead(status).write(data ?? '');
+        this.data.res.status(status).send(data);
         await this.consume();
         return this.data.res;
     }
@@ -71,7 +71,7 @@ export class HttpRequest extends YaguraEvent {
         }
 
         if(!this.data.res.finished)
-            return new Promise((resolve) => this.data.res.end(() => resolve()));
+            return new Promise((resolve) => this.data.res.end(resolve));
 
         return;
     }

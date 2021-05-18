@@ -1,4 +1,4 @@
-import { Yagura, Layer, Logger, YaguraError, eventFilter } from '@yagura/yagura';
+import { Layer, Logger, eventFilter } from '@yagura/yagura';
 
 import { HttpError, HttpErrorType } from './errors/http.error';
 import { HttpRouter } from './routes';
@@ -68,6 +68,6 @@ export abstract class HttpApiLayer extends Layer {
         }
 
         // Pass HTTP event further down if not handled
-        return handled ? null : event;
+        return handled === true ? null : event;
     }
 }

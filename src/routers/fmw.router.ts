@@ -53,6 +53,7 @@ export class FmwRouter<V extends FindMyWay.HTTPVersion = FindMyWay.HTTPVersion.V
     }
 
     public prettyPrint(): string {
-        return this._fmw.prettyPrint();
+        // TODO: the type definition of prettyPrint does not allow opts, contact find-my-way devs
+        return (this._fmw as any).prettyPrint({ commonPrefix: false });
     }
 }

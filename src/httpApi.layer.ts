@@ -35,7 +35,7 @@ export abstract class HttpApiLayer extends Layer {
             this.declareRoutes(this._router);
 
             if (process.env.NODE_ENV !== 'production') {
-                // this.yagura.getService<Logger>('Logger').debug("[HTTP]".green.bold + ` routes declared;\n` + this._router.prettyPrint().dim);
+                this.yagura.getService<Logger>('Logger').debug(`${colors.green("[HTTP]")} routes declared;\n${this._router.prettyPrint().dim}`);
             }
         } catch (err) {
             throw err;

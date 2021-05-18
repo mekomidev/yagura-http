@@ -74,8 +74,7 @@ export class HttpServerService extends Service {
 
         // Set up error handling
         app.use(async (err: Error, req: express.Request, res: express.Response) => {
-            this.logger.error('[HTTP] UNHANDLED ERROR caught');
-            this.logger.error(err);
+            this.logger.error(`[HTTP] ERROR UNHANDLED BY YAGURA`);
 
             if (!res.headersSent) {
                 if (err instanceof HttpError) {
@@ -85,12 +84,17 @@ export class HttpServerService extends Service {
                     res.sendStatus(500);
                 }
             } else {
-                this.logger.error('\nCould not notify client about internal error, headers already sent');
+                this.logger.error('[HTTP] Could not notify client about internal error, headers already sent, ending request...');
             }
 
-            res.end();
 
-            // Calls Layer's error handler
+            this.logger.error(`${colors.red("[HTTP]")} ${colors.bold(req.method)} ${res.statusCode.toString().dim} ${req.path}`);
+            this.logger.error(err);
+
+            // Send
+            await new Promise((resolve) => res.end(resolve));
+
+            // Calls Yagura's error handler
             try {
                 await this.yagura.handleError(err);
             } catch {

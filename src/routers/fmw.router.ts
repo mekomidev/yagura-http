@@ -47,6 +47,7 @@ export class FmwRouter<V extends FindMyWay.HTTPVersion = FindMyWay.HTTPVersion.V
         const routeResult = this._fmw.find(method as FindMyWay.HTTPMethod, routePath);
         if (!!routeResult && !!routeResult.handler) {
             const handler: HttpRouteCallback = routeResult.handler as any as HttpRouteCallback;     // dangerous!
+            event.data.req.params = routeResult.params;
 
             await handler(event);
 

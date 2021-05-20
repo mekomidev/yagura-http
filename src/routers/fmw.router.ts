@@ -19,8 +19,12 @@ class FmwRoute<V extends FindMyWay.HTTPVersion = FindMyWay.HTTPVersion.V1> exten
     public method(method: HttpMethod, handler: HttpRouteCallback) {
         const m = method.toUpperCase() as FindMyWay.HTTPMethod;
 
-        this._fmw.off(m, this.path);
-        this._fmw.on(m, this.path, handler as any as FindMyWay.Handler<V>);
+        if(method === 'ALL') {
+            this._fmw.all(this.path, handler as any as FindMyWay.Handler<V>);
+        } else {
+            this._fmw.off(m, this.path);
+            this._fmw.on(m, this.path, handler as any as FindMyWay.Handler<V>);
+        }
     }
 }
 

@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { Yagura } from '@yagura/yagura';
-import { HttpApiLayer, HttpRouter, HttpServerConfig, HttpServerService, HttpRequest } from '../src';
-import { Response } from 'superagent';
+import { HttpApiLayer, HttpRouter, HttpServerConfig, HttpServerService, HttpRequest, CrudAdapter, CrudResponse } from '../src';
 
 import 'mocha';
 // import * as sinon from 'sinon';
-const chai = require('chai');
-const chaiHttp = require('chai-http');
+import * as chai from 'chai';
+import chaiHttp = require('chai-http');
 const expect = chai.expect;
 
 // import 'clarify';
@@ -14,17 +13,11 @@ const expect = chai.expect;
 describe('HttpApiLayer', () => {
     const config: HttpServerConfig = {
         port: 30000,
-        timeout: 10000,
+        timeout: 1000,
         defaultError: 500
     };
 
     class ExampleApiLayer extends HttpApiLayer {
-        constructor() {
-            super();
-        }
-
-        public async initialize() { /* */ };
-
         public declareRoutes(router: HttpRouter) {
             router.route('/my-route').get(async (event: HttpRequest) => {
                 await event.send(200);
@@ -32,13 +25,15 @@ describe('HttpApiLayer', () => {
         }
     }
 
-    class LongApiLayer extends HttpApiLayer {
-        constructor() {
-            super();
+    class AllApiLayer extends HttpApiLayer {
+        public declareRoutes(router: HttpRouter) {
+            router.route('/my-route').all(async (event: HttpRequest) => {
+                await event.send(200);
+            })
         }
+    }
 
-        public async initialize() { /* */ };
-
+    class LongApiLayer extends HttpApiLayer {
         public declareRoutes(router: HttpRouter) {
             router.route('/my-route2/is/long').get(async (event: HttpRequest) => {
                 await event.send(200);
@@ -47,12 +42,6 @@ describe('HttpApiLayer', () => {
     }
 
     class MultipleApiLayer extends HttpApiLayer {
-        constructor() {
-            super();
-        }
-
-        public async initialize() { /* */ };
-
         public declareRoutes(router: HttpRouter) {
             router.route('/routeA').get(async (event: HttpRequest) => {
                 await event.send(200, {data: 'a'});
@@ -69,12 +58,6 @@ describe('HttpApiLayer', () => {
     }
 
     class OverridingApiLayer extends HttpApiLayer {
-        constructor() {
-            super();
-        }
-
-        public async initialize() { /* */ };
-
         public declareRoutes(router: HttpRouter) {
             router.route('/routeB').get(async (event: HttpRequest) => {
                 await event.send(200, {data: 'BBB'});
@@ -83,12 +66,6 @@ describe('HttpApiLayer', () => {
     }
 
     class ErrorApiLayer extends HttpApiLayer {
-        constructor() {
-            super();
-        }
-
-        public async initialize() { /* */ };
-
         public declareRoutes(router: HttpRouter) {
             router.route('/my-route').get(() => {
                 throw new Error("This is a test");
@@ -165,7 +142,7 @@ describe('HttpApiLayer', () => {
         app = await Yagura.start([ new OverridingApiLayer(), new MultipleApiLayer() ], [ new HttpServerService(config) ]);
 
         const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
-        const resA: Response = await chai.request(server)
+        const resA = await chai.request(server)
             .get('/routeA');
 
         const resB = await chai.request(server)
@@ -180,9 +157,24 @@ describe('HttpApiLayer', () => {
     });
 
     // methods
-    it("should respond to all methods when declared");
+    it("should respond to all methods when declared", async () => {
+        app = await Yagura.start([ new AllApiLayer() ], [ new HttpServerService(config) ]);
+        const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
 
-    it("should respond to custom methods when declared");
+        const resGet = await chai.request(server)
+            .get('/my-route');
+        const resPut = await chai.request(server)
+            .get('/my-route');
+        const resPost = await chai.request(server)
+            .get('/my-route');
+        const resDelete = await chai.request(server)
+            .get('/my-route');
+
+        expect(resGet).to.have.status(200);
+        expect(resPut).to.have.status(200);
+        expect(resPost).to.have.status(200);
+        expect(resDelete).to.have.status(200);
+    });
 
     // TODO: find-my-way doesn't support this as of now (https://github.com/delvedor/find-my-way/issues/75)
     // it("should respond with 405 when method missing", async () => {

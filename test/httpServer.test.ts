@@ -1,11 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import { Yagura, Layer, Service, YaguraEvent } from '@yagura/yagura';
+import { Yagura } from '@yagura/yagura';
 import { HttpServerConfig, HttpServerService } from '../src';
+
+import { Server } from 'node:http';
+import { AddressInfo } from 'net';
+import { Express as ExpressApp } from 'express';
 
 import 'mocha';
 import * as sinon from 'sinon';
-const chai = require('chai');
-const chaiHttp = require('chai-http');
+import * as chai from 'chai';
+import chaiHttp = require('chai-http');
 const expect = chai.expect;
 
 // import 'clarify';
@@ -13,7 +17,7 @@ const expect = chai.expect;
 describe('HttpServer', () => {
     const config: HttpServerConfig = {
         port: 30000,
-        timeout: 10000,
+        timeout: 1000,
         defaultError: 500
     };
 

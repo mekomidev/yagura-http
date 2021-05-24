@@ -188,7 +188,125 @@ describe('HttpApiLayer', () => {
     // });
 
     // CrudAdapter
-    it("should mount as route");
+    describe('CrudAdapter', () => {
+        class DataAdapter implements CrudAdapter<number> {
+            private data: number[] = [0, 1, 2, 3, 4];
+
+            public getMany(query: any): Promise<CrudResponse<number[]>> {
+                const result: number[] = this.data.slice();
+                let res: CrudResponse<number[]>;
+
+                if(query.even === 'true' || query.odd === 'false') {
+                    res = { code: 200, data: result.filter((v) => v % 2 === 0) };
+                } else if(query.even === 'false' || query.odd === 'true') {
+                    res = { code: 200, data: result.filter((v) => v % 2 === 1) };
+                } else {
+                    res = { code: 200, data: result };
+                }
+
+                return Promise.resolve(res);
+            }
+            public getOne(id: any): Promise<CrudResponse<number>> {
+                id = Number.parseInt(id, 10);
+                let res;
+                const result: number = this.data[id];
+                if(result === undefined) {
+                    res = { code: 404, data: undefined };
+                } else {
+                    res = { code: 200, data: result.toString(10) };
+                }
+
+                return Promise.resolve(res);
+            }
+            public create(input: Partial<number>): Promise<CrudResponse<number>> {
+                const id = this.data.push(input) - 1;
+                const res: CrudResponse<number> = { code: 201, data: input };
+
+                return Promise.resolve(res);
+            }
+            public update(id: any, input: Partial<number>): Promise<CrudResponse<number>> {
+                id = Number.parseInt(id, 10);
+                let res;
+                if(this.data[id] !== undefined) {
+                    this.data[id] = input;
+                    res = { code: 200, data: input.toString(10) }
+                } else {
+                    res = { code: 404, data: undefined };
+                }
+
+                return Promise.resolve(res);
+            }
+            public delete(id: any): Promise<CrudResponse<number | void>> {
+                id = Number.parseInt(id, 10);
+                let res;
+                if(this.data[id] !== undefined) {
+                    res = { code: 200 }
+                } else {
+                    res = { code: 404 };
+                }
+
+                return Promise.resolve(res);
+            }
+        }
+
+        class CrudResourceLayer extends HttpApiLayer {
+            public declareRoutes(router: HttpRouter) {
+                router.route('/data').model(new DataAdapter());
+            }
+        }
+
+        it("should mount as route", async () => {
+            app = await Yagura.start([ new CrudResourceLayer() ], [ new HttpServerService(config) ]);
+            const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+            expect(app).to.be.instanceOf(Yagura);
+
+            const res = await chai.request(server)
+                .get('/');
+
+            expect(res).to.have.status(404);
+        });
+
+        it("should respond to GET method for one item", async () => {
+            app = await Yagura.start([ new CrudResourceLayer() ], [ new HttpServerService(config) ]);
+
+            const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+            const res = await chai.request(server)
+                .get('/data/0');
+
+            expect(res).to.have.status(200);
+            expect(res.body).to.be.eq(0);
+        });
+
+        it("should respond to GET method for many items with a query", async () => {
+            app = await Yagura.start([ new CrudResourceLayer() ], [ new HttpServerService(config) ]);
+
+            const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+            const res = await chai.request(server)
+                .get('/data?even=true');
+
+            expect(res).to.have.status(200);
+            expect(res.body).to.be.eql([0, 2, 4]);
+        });
+
+        it("should respond to POST method", async () => {
+            app = await Yagura.start([ new CrudResourceLayer() ], [ new HttpServerService(config) ]);
+
+            const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+            const res = await chai.request(server)
+                .post('/data')
+                .send('25');
+
+            expect(res).to.have.status(201);
+            expect(res.body).to.be.eq(25);
+        });
+
+        it("should respond to PUT method", async () => {
+            app = await Yagura.start([ new CrudResourceLayer() ], [ new HttpServerService(config) ]);
+
+            const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+            const res = await chai.request(server)
+                .put('/data/0')
+                .send('25');
 
     it("should respond to GET method for one item");
 

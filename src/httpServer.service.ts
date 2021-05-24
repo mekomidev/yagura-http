@@ -70,9 +70,7 @@ export class HttpServerService extends Service {
         // Pass events to Yagura
         app.use(async (req, res) => {
             try {
-                const time = Date.now();
                 await promiseTimeout(this.config.timeout, this.yagura.dispatch(new HttpRequest({ req, res })), true);
-                console.log(`time: ${Date.now() - time}`);
             } catch (e) {
                 // catch only timeout errors
                 await new Promise((resolve) => res.status(408).end(resolve));

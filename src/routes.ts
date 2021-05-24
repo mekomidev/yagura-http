@@ -1,4 +1,5 @@
 import { HttpRequest } from './request';
+import * as Express from 'express';
 
 export class HttpRouteFormattingError extends Error {}
 
@@ -63,12 +64,14 @@ export abstract class HttpRoute {
 
         // POST (create)
         this.post(async (event) => {
+            await new Promise(resolve => Express.raw()(event.data.req, event.data.res, resolve));
             const res = await model.create(event.data.req.body);
             event.data.res.status(res.code).send(res.data);
         });
 
         // PUT (update)
         this.route('/:id').put(async (event) => {
+            await new Promise(resolve => Express.raw()(event.data.req, event.data.res, resolve));
             const res = await model.update(event.data.req.params.id, event.data.req.query as any);
             event.data.res.status(res.code).send(res.data);
         });
@@ -111,7 +114,7 @@ export abstract class HttpRouter {
 
 /** Boilerplate interface for writing CRUD-structured resource request callbacks */
 export interface CrudAdapter<D> {
-    getMany(query: any): Promise<CrudResponse<[D]>>;
+    getMany(query: any): Promise<CrudResponse<D[]>>;
     getOne(id: any): Promise<CrudResponse<D>>;
     create(data: Partial<D>): Promise<CrudResponse<D>>;
     update(id: any, data: Partial<D>): Promise<CrudResponse<D>>;

@@ -46,7 +46,7 @@ export class HttpServerService extends Service {
     }
 
     /** Creates an Express app instance and starts a HTTP server */
-    public async initialize() {
+    public async onInitialize() {
         this.logger = this.yagura.getService('Logger');
 
         if (this._express) {
@@ -69,7 +69,12 @@ export class HttpServerService extends Service {
 
         // Pass events to Yagura
         app.use(async (req, res) => {
-            return promiseTimeout(this.config.timeout, this.yagura.dispatch(new HttpRequest({ req, res })));
+            try {
+                await promiseTimeout(this.config.timeout, this.yagura.dispatch(new HttpRequest({ req, res })), true);
+            } catch (e) {
+                // catch only timeout errors
+                await new Promise((resolve) => res.status(408).end(resolve));
+            }
         });
 
         // Set up error handling
@@ -113,7 +118,9 @@ export class HttpServerService extends Service {
         });
     }
 
+    /** Asks the HTTP server to stop gracefully. Times out after 5 seconds, then destroys the HTTP server ungracefully */
     public async stop(): Promise<void> {
-        return new Promise((resolve, reject) => this._server.close((err) => { if(err) reject(err); else resolve(); }));
+        const stopPromise: Promise<void> = new Promise((resolve, reject) => this._server.close((err) => { if(err) reject(err); else resolve(); }));
+        return promiseTimeout(5000, stopPromise);
     }
 }

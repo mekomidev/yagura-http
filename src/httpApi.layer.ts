@@ -1,6 +1,5 @@
 import { Layer, Logger, eventFilter } from '@yagura/yagura';
 
-import { HttpError, HttpErrorType } from './errors/http.error';
 import { HttpRouter } from './routes';
 import { HttpRequest } from './request';
 import { FmwRouter } from './routers/fmw.router';
@@ -33,13 +32,16 @@ export abstract class HttpApiLayer extends Layer {
             // TODO: decouple FmwRouter from here, set as default, but allow specifying a custom router
             this._router = new FmwRouter();
             this.declareRoutes(this._router);
-
-            if (process.env.NODE_ENV !== 'production') {
-                this.yagura.getService<Logger>('Logger').debug(`${colors.green("[HTTP]")} routes declared;\n${this._router.prettyPrint().dim}`);
-            }
         } catch (err) {
             throw err;
             // throw new YaguraError(`Failed to set up HTTP router:\n${err.message}`);
+        }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async onInitialize() {
+        if (process.env.NODE_ENV !== 'production') {
+            this.yagura.getService<Logger>('Logger').debug(`${colors.green("[HTTP]")} routes declared;\n${this._router.prettyPrint().dim}`);
         }
     }
 

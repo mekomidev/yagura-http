@@ -48,6 +48,7 @@ export abstract class HttpRoute {
      * @param {CrudAdapter} model a CRUD model adapter to mount as a resource
      *
      * @returns itself, for chaining
+     * @experimental
      */
     public model<D>(model: CrudAdapter<D>): HttpRoute {
         // GET many
@@ -112,7 +113,11 @@ export abstract class HttpRouter {
 
 // }
 
-/** Boilerplate interface for writing CRUD-structured resource request callbacks */
+/**
+ * Boilerplate interface for writing CRUD-structured resource request callbacks
+ *
+ * @experimental
+ */
 export interface CrudAdapter<D> {
     getMany(query: any): Promise<CrudResponse<D[]>>;
     getOne(id: any): Promise<CrudResponse<D>>;
@@ -121,7 +126,11 @@ export interface CrudAdapter<D> {
     delete(id: any): Promise<CrudResponse<D | void>>;
 }
 
-/** Response interface to be used with CrudAdapter callbacks */
+/**
+ * Response interface to be used with CrudAdapter callbacks
+ *
+ * @experimental
+ */
 // TODO: consider eliminating this
 export interface CrudResponse<D> {
     code?: number;

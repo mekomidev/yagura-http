@@ -308,15 +308,24 @@ describe('HttpApiLayer', () => {
                 .put('/data/0')
                 .send('25');
 
-    it("should respond to GET method for one item");
+            expect(res).to.have.status(200);
+            expect(res.body).to.be.eq(25);
+        });
 
-    it("should respond to GET method for many items with a query");
+        it("should respond to DELETE method", async () => {
+            app = await Yagura.start([ new CrudResourceLayer() ], [ new HttpServerService(config) ]);
 
-    it("should respond to POST method");
+            const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+            const res = await chai.request(server)
+                .delete('/data/0');
 
-    it("should respond to PUT method");
+            expect(res).to.have.status(200);
+        });
 
-    it("should respond to DELETE method");
+        // afterEach(async () => {
+        //     await app.getService<HttpServerService>('HttpServer').stop();
+        // })
+    });
 
     afterEach(async () => {
         await app.getService<HttpServerService>('HttpServer').stop();

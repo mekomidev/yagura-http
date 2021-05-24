@@ -46,7 +46,7 @@ export class HttpServerService extends Service {
     }
 
     /** Creates an Express app instance and starts a HTTP server */
-    public async initialize() {
+    public async onInitialize() {
         this.logger = this.yagura.getService('Logger');
 
         if (this._express) {

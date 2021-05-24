@@ -39,7 +39,7 @@ export abstract class HttpApiLayer extends Layer {
     }
 
     // eslint-disable-next-line @typescript-eslint/require-await
-    public async initialize() {
+    public async onInitialize() {
         if (process.env.NODE_ENV !== 'production') {
             this.yagura.getService<Logger>('Logger').debug(`${colors.green("[HTTP]")} routes declared;\n${this._router.prettyPrint().dim}`);
         }

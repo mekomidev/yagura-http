@@ -120,7 +120,9 @@ export class HttpServerService extends Service {
         });
     }
 
+    /** Asks the HTTP server to stop gracefully. Times out after 5 seconds, then destroys the HTTP server ungracefully */
     public async stop(): Promise<void> {
-        return new Promise((resolve, reject) => this._server.close((err) => { if(err) reject(err); else resolve(); }));
+        const stopPromise: Promise<void> = new Promise((resolve, reject) => this._server.close((err) => { if(err) reject(err); else resolve(); }));
+        return promiseTimeout(5000, stopPromise);
     }
 }

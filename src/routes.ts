@@ -73,7 +73,7 @@ export abstract class HttpRoute {
         // PUT (update)
         this.route('/:id').put(async (event) => {
             await new Promise(resolve => Express.raw()(event.data.req, event.data.res, resolve));
-            const res = await model.update(event.data.req.params.id, event.data.req.query as any);
+            const res = await model.update(event.data.req.params.id, event.data.req.body);
             event.data.res.status(res.code).send(res.data);
         });
 

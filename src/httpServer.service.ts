@@ -4,6 +4,7 @@ import { HttpRequest } from './request';
 
 import { Express as ExpressApp } from 'express';
 import * as express from 'express';
+import * as bodyParser from 'body-parser';
 
 import * as colors from 'colors/safe';
 import { Server } from 'node:http';
@@ -59,6 +60,9 @@ export class HttpServerService extends Service {
         const app: ExpressApp = express();
         // Attach middleware
         require('express-async-errors');
+        app.use(bodyParser.json());
+        app.use(bodyParser.text());
+        app.use(bodyParser.urlencoded());
 
         // Apply settings
         for (const key in this.config.expressSettings) {

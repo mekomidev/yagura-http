@@ -27,7 +27,10 @@ export abstract class HttpApiLayer extends Layer {
 
     constructor(config?: HttpApiConfig) {
         super(config ?? HttpApiLayer.DEFAULT_CONFIGS);
+    }
 
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async onInitialize() {
         try {
             // TODO: decouple FmwRouter from here, set as default, but allow specifying a custom router
             this._router = new FmwRouter();
@@ -36,10 +39,6 @@ export abstract class HttpApiLayer extends Layer {
             throw err;
             // throw new YaguraError(`Failed to set up HTTP router:\n${err.message}`);
         }
-    }
-
-    // eslint-disable-next-line @typescript-eslint/require-await
-    public async onInitialize() {
         if (process.env.NODE_ENV !== 'production') {
             this.yagura.getService<Logger>('Logger').debug(`${colors.green("[HTTP]")} routes declared;\n${this._router.prettyPrint().dim}`);
         }

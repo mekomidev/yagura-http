@@ -53,11 +53,9 @@ export abstract class HttpApiLayer extends Layer {
 
     @eventFilter([HttpRequest])
     public async handleEvent(event: HttpRequest): Promise<HttpRequest> {
-        let handled: boolean;
-
         try {
             const startTime = Date.now();
-            handled = await this._router.handle(event);
+            const handled = await this._router.handle(event);
             const time = Date.now() - startTime;
 
             if (this.config.options.debugTime && handled) {
@@ -69,6 +67,6 @@ export abstract class HttpApiLayer extends Layer {
         }
 
         // Pass HTTP event further down if not handled
-        return handled === true ? null : event;
+        return event.wasConsumed === true ? null : event;
     }
 }

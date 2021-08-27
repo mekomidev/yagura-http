@@ -1,6 +1,6 @@
 {
     "name": "@yagura/http",
-    "version": "0.0.1",
+    "version": "0.0.3",
     "description": "HTTP package for Yagura",
     "main": "lib/js/index.js",
     "types": "lib/declarations/index.d.ts",
@@ -15,7 +15,7 @@
         "README.md",
         "lib/"
     ],
-    "author": "James Kerber <kerberjg@mekomidev.com>",
+    "author": "James Kerber <james.kerber@mekomi.dev>",
     "license": "GPL-3.0-only",
     "repository": {
         "type": "git",
@@ -51,11 +51,11 @@
         "@types/expect.js": "^0.3.29",
         "@types/express": "^4.17.11",
         "@types/node": "^12.0.0",
-        "body-parser": "^1.18.3",
+        "body-parser": "^1.18.0",
         "colors": "^1.4.0",
         "config": "^3.3.6",
         "express": "^4.17.1",
         "express-async-errors": "^3.1.1",
-        "find-my-way": "^4.1.0"
+        "find-my-way": "^4.3.0"
     }
 }

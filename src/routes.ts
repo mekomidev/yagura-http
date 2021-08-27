@@ -5,7 +5,7 @@ export class HttpRouteFormattingError extends Error {}
 
 export type HttpRouteCallback = (event: HttpRequest) => Promise<void>;
 
-export type HttpMethod = 'ALL' | 'HEAD' | 'GET' | 'POST' | 'PUT' | 'DELETE';
+export type HttpMethod = 'ALL' | 'HEAD' | 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS';
 
 export abstract class HttpRoute {
     /** Path relative to the route this route is mounted on */
@@ -54,33 +54,33 @@ export abstract class HttpRoute {
         // GET many
         this.get(async (event: HttpRequest) => {
             const res = await model.getMany(event.data.req.query);
-            event.data.res.status(res.code).send(res.data);
+            await event.send(res.code, res.data);
         });
 
         // GET one
         this.route('/:id').get(async (event: HttpRequest) => {
             const res = await model.getOne(event.data.req.params.id);
-            event.data.res.status(res.code).send(res.data);
+            await event.send(res.code, res.data);
         });
 
         // POST (create)
         this.post(async (event) => {
             await new Promise(resolve => Express.raw()(event.data.req, event.data.res, resolve));
             const res = await model.create(event.data.req.body);
-            event.data.res.status(res.code).send(res.data);
+            await event.send(res.code, res.data);
         });
 
         // PUT (update)
         this.route('/:id').put(async (event) => {
             await new Promise(resolve => Express.raw()(event.data.req, event.data.res, resolve));
-            const res = await model.update(event.data.req.params.id, event.data.req.query as any);
-            event.data.res.status(res.code).send(res.data);
+            const res = await model.update(event.data.req.params.id, event.data.req.body);
+            await event.send(res.code, res.data);
         });
 
         // DELETE one
         this.route('/:id').delete(async (event) => {
             const res = await model.delete(event.data.req.params.id);
-            event.data.res.status(res.code).send(res.data);
+            await event.send(res.code, res.data);
         });
 
         return this;

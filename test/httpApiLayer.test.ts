@@ -274,7 +274,7 @@ describe('HttpApiLayer', () => {
                 .get('/data/0');
 
             expect(res).to.have.status(200);
-            expect(res.body).to.be.eq(0);
+            expect(res.text).to.be.eq('0');
         });
 
         it("should respond to GET method for many items with a query", async () => {
@@ -294,10 +294,11 @@ describe('HttpApiLayer', () => {
             const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
             const res = await chai.request(server)
                 .post('/data')
+                .set('content-type', 'text/plain')
                 .send('25');
 
             expect(res).to.have.status(201);
-            expect(res.body).to.be.eq(25);
+            expect(res.text).to.be.eq('25');
         });
 
         it("should respond to PUT method", async () => {
@@ -306,10 +307,11 @@ describe('HttpApiLayer', () => {
             const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
             const res = await chai.request(server)
                 .put('/data/0')
+                .set('content-type', 'text/plain')
                 .send('25');
 
             expect(res).to.have.status(200);
-            expect(res.body).to.be.eq(25);
+            expect(res.text).to.be.eq('25');
         });
 
         it("should respond to DELETE method", async () => {

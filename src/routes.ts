@@ -5,7 +5,7 @@ export class HttpRouteFormattingError extends Error {}
 
 export type HttpRouteCallback = (event: HttpRequest) => Promise<void>;
 
-export type HttpMethod = 'ALL' | 'HEAD' | 'GET' | 'POST' | 'PUT' | 'DELETE';
+export type HttpMethod = 'ALL' | 'HEAD' | 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS';
 
 export abstract class HttpRoute {
     /** Path relative to the route this route is mounted on */

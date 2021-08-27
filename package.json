@@ -1,6 +1,6 @@
 {
     "name": "@yagura/http",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "HTTP package for Yagura",
     "main": "lib/js/index.js",
     "types": "lib/declarations/index.d.ts",
@@ -56,6 +56,6 @@
         "config": "^3.3.6",
         "express": "^4.17.1",
         "express-async-errors": "^3.1.1",
-        "find-my-way": "^4.1.0"
+        "find-my-way": "^4.3.0"
     }
 }

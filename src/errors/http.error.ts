@@ -13,13 +13,10 @@ export class HttpError extends Error {
      */
 
     public static addType(errorType: HttpErrorType) {
-        // if (errorType instanceof HttpErrorType) {
-        //     if (!errorType.code || typeof errorType.code !== 'number') throw new Error('An instance of HttpErrorType needs a \'code\' number parameter');
-        //     if (!errorType.type || typeof errorType.type !== 'string') throw new Error('An instance of HttpErrorType needs a \'type\' string parameter');
-        //     if (typeof errorType.message !== 'string') throw new Error('An instance of HttpErrorType needs a \'message\' string parameter');
-        // }
+        // Initialize error list
+        if (!HttpError._types) { HttpError.initTypes(); }
 
-        if (HttpError._types[errorType.type]) {
+        if (!!HttpError._types && HttpError._types[errorType.type]) {
             throw new Error(`An HttpErrorType with type "${errorType.type}" already exists`);
         } else {
             HttpError._types[errorType.type] = errorType;
@@ -27,6 +24,9 @@ export class HttpError extends Error {
     }
 
     public static overrideType(errorType: HttpErrorType) {
+        // Initialize error list
+        if (!HttpError._types) { HttpError.initTypes(); }
+
         if (!HttpError._types[errorType.type]) {
             throw new Error(`An HttpErrorType with type "${errorType.type}" doesn't exist, so it cannot be overridden`);
         } else {

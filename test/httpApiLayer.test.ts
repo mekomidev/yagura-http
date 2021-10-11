@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { Yagura } from '@yagura/yagura';
-import { HttpApiLayer, HttpRouter, HttpServerConfig, HttpServerService, HttpRequest, CrudAdapter, CrudResponse } from '../src';
+import { HttpApiLayer, HttpRouter, HttpServerConfig, HttpServerService, HttpRequest, CrudAdapter, CrudResponse, HttpError } from '../src';
 
 import 'mocha';
 // import * as sinon from 'sinon';
@@ -73,6 +73,14 @@ describe('HttpApiLayer', () => {
         }
     }
 
+    class HttpErrorApiLayer extends HttpApiLayer {
+        public declareRoutes(router: HttpRouter) {
+            router.route('/my-route').get(() => {
+                throw new HttpError(400);
+            })
+        }
+    }
+
     before(() => {
         chai.use(chaiHttp);
     });
@@ -107,6 +115,16 @@ describe('HttpApiLayer', () => {
             .get('/my-route');
 
         expect(res).to.have.status(500);
+    });
+
+    it('should respond with thrown HttpError', async () => {
+        app = await Yagura.start([ new HttpErrorApiLayer() ], [ new HttpServerService(config) ]);
+
+        const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+        const res = await chai.request(server)
+            .get('/my-route');
+
+        expect(res).to.have.status(400);
     });
 
     // routing

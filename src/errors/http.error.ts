@@ -19,7 +19,7 @@ export class HttpError extends Error {
         if (!!HttpError._types && HttpError._types[errorType.type]) {
             throw new Error(`An HttpErrorType with type "${errorType.type}" already exists`);
         } else {
-            HttpError._types[errorType.type] = errorType;
+            HttpError._types.set(errorType.type, errorType);
         }
     }
 
@@ -35,7 +35,7 @@ export class HttpError extends Error {
         }
     }
 
-    private static _types: any;
+    private static _types: Map<string, HttpErrorType>;
 
     private static initTypes() {
         const errors = {
@@ -43,6 +43,7 @@ export class HttpError extends Error {
                 message: "The connection was interrupted or has timed out"
             },
             'default': {
+                status: 500,
                 message: "An unknown error has been thrown"
             },
             'internal_error': {
@@ -71,6 +72,8 @@ export class HttpError extends Error {
             }
           };
 
+        HttpError._types = new Map<string, HttpErrorType>();
+
         for (const errorName in errors) {
             if (errors.hasOwnProperty(errorName)) {
                 const error = errors[errorName];
@@ -93,16 +96,20 @@ export class HttpError extends Error {
         // Initialize error list
         if (!HttpError._types) { HttpError.initTypes(); }
 
-        if (!errorType) {
-            errorType = HttpError._types.default;
-        }
-
         // Find error type
         let error: HttpErrorType;
-        if (typeof errorType === 'string') {
+        if (!errorType) {
+            error = HttpError._types['default'];
+        } else if (typeof errorType === 'string') {
             error = errorType = HttpError._types[errorType];
         } else if (typeof errorType === 'number') {
-            error = HttpError._types.find((e: any) => !!HttpError._types[e] && HttpError._types[e].status === 'number');
+            error = Array.from(HttpError._types.values()).find((e) => e.code === errorType);
+            if(!error) {
+                error =  {
+                    type: '',
+                    code: errorType
+                }
+            }
         }
 
         if (!error) {

@@ -12,10 +12,54 @@ import { Server } from 'node:http';
 export interface HttpServerConfig {
     port: number;
     timeout: number;
-    errorCodes?: [HttpErrorType];
+    errorCodes?: HttpErrorType[];
     defaultError: string | number;
     expressSettings?: {[key: string]: any};
 }
+
+const defaultErrors: HttpErrorType[] = [
+    {
+        type: 'timeout',
+        code: 0,
+        message: "The connection was interrupted or has timed out"
+    },
+    {
+        type: 'default',
+        code: 500,
+        message: "An unknown error has been thrown"
+    },
+    {
+        type: 'internal_error',
+        code: 500,
+        message: "An internal error has occurred"
+    },
+    {
+        type: 'not_found',
+        code: 404,
+        message: "The requested resource hasn't been found"
+    },
+    {
+        type: 'unauthorized',
+        code: 403
+    },
+    {
+        type: 'malformed_query',
+        code: 400
+    },
+    {
+        type: 'already_exists',
+        code: 409,
+        message: "A resource with the same key already exists"
+    },
+    {
+        type: 'token_expired',
+        code: 410
+    },
+    {
+        type: 'wrong_credentials',
+        code: 401
+    }
+];
 
 /**
  * Express.js-based HTTP server Layer.
@@ -39,10 +83,10 @@ export class HttpServerService extends Service {
         this.config = config;
 
         // Initialize all defined error types
+        defaultErrors.forEach((ec) => HttpError.addType(ec));
+
         if (this.config.errorCodes && this.config.errorCodes.length > 0) {
-            this.config.errorCodes.forEach((errorCode) => {
-                HttpError.addType(errorCode);
-            });
+            this.config.errorCodes.forEach((ec) => HttpError.addType(ec, true) );
         }
     }
 

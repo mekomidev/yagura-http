@@ -14,6 +14,7 @@ describe('HttpApiLayer', () => {
     const config: HttpServerConfig = {
         port: 30000,
         timeout: 1000,
+        debugTime: true,
         defaultError: 500
     };
 

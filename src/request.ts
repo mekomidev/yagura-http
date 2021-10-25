@@ -67,11 +67,11 @@ export class HttpRequest extends YaguraEvent {
 
     public async onConsumed(): Promise<void> {
         if(this.data.res.statusCode === -1) {
-            this.data.res.writeHead(404);
+            this.data.res.statusCode = 404;
         }
 
         if(!this.data.res.finished)
-            return new Promise((resolve) => this.data.res.end(resolve));
+            return new Promise((resolve) => this.data.res.end(resolve) );
 
         return;
     }

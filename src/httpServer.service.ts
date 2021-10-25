@@ -12,6 +12,7 @@ import { Server } from 'node:http';
 export interface HttpServerConfig {
     port: number;
     timeout: number;
+    debugTime: boolean;
     errorCodes?: HttpErrorType[];
     defaultError: string | number;
     expressSettings?: {[key: string]: any};
@@ -117,11 +118,17 @@ export class HttpServerService extends Service {
 
         // Pass events to Yagura
         app.use(async (req, res) => {
+            const startTime = Date.now();
+
             try {
                 await promiseTimeout(this.config.timeout, this.yagura.dispatch(new HttpRequest({ req, res })), true);
             } catch (e) {
                 // catch only timeout errors
+                this.logger.error(`[HTTP] request timed out`);
                 await new Promise((resolve) => res.status(408).end(resolve));
+            } finally {
+                const time = Date.now() - startTime;
+                if(this.config.debugTime) this.yagura.getService<Logger>('Logger').verbose(colors.green("[HTTP]") + ` ${colors.bold(req.method)} ${res.statusCode.toString().dim} ${req.path} ` + `[${time}ms]`.dim);
             }
         });
 

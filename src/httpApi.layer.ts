@@ -6,10 +6,8 @@ import { FmwRouter } from './routers/fmw.router';
 
 import * as colors from 'colors/safe';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface HttpApiConfig {
-    options: {
-        debugTime: boolean;
-    };
 }
 
 /**
@@ -54,13 +52,7 @@ export abstract class HttpApiLayer extends Layer {
     @eventFilter([HttpRequest])
     public async handleEvent(event: HttpRequest): Promise<HttpRequest> {
         try {
-            const startTime = Date.now();
-            const handled = await this._router.handle(event);
-            const time = Date.now() - startTime;
-
-            if (this.config.options.debugTime && handled) {
-                this.yagura.getService<Logger>('Logger').verbose(colors.green("[HTTP]") + ` ${colors.bold(event.data.req.method)} ${event.data.res.statusCode.toString().dim} ${event.data.req.path} ` + `[${time}ms]`.dim);
-            }
+            await this._router.handle(event);
         } catch (err) {
             this.yagura.getService<Logger>('Logger').error(colors.red("[HTTP]") + ` ${event.data.req.method} ${event.data.req.path} responded with an error:\n${(err as Error).stack.toString().dim}`);
             if(event.canSend) await event.sendError(err);

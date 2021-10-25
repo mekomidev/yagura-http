@@ -33,7 +33,10 @@ export class FmwRouter<V extends FindMyWay.HTTPVersion = FindMyWay.HTTPVersion.V
 
     constructor() {
         super();
-        this._fmw = FindMyWay();
+        this._fmw = FindMyWay({
+            ignoreTrailingSlash: true,
+            maxParamLength: 2048,
+        });
     }
 
     public route(routePath: string): HttpRoute {

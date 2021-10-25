@@ -12,79 +12,15 @@ export class HttpError extends Error {
      *  Static members
      */
 
-    public static addType(errorType: HttpErrorType) {
-        // Initialize error list
-        if (!HttpError._types) { HttpError.initTypes(); }
-
-        if (!!HttpError._types && HttpError._types[errorType.type]) {
+    public static addType(errorType: HttpErrorType, override: boolean = false) {
+        if (!!HttpError._types && HttpError._types[errorType.type] && !override) {
             throw new Error(`An HttpErrorType with type "${errorType.type}" already exists`);
         } else {
             HttpError._types.set(errorType.type, errorType);
         }
     }
 
-    public static overrideType(errorType: HttpErrorType) {
-        // Initialize error list
-        if (!HttpError._types) { HttpError.initTypes(); }
-
-        if (!HttpError._types[errorType.type]) {
-            throw new Error(`An HttpErrorType with type "${errorType.type}" doesn't exist, so it cannot be overridden`);
-        } else {
-            // logger.warn(`HttpErrorType with type "${errorType.type}" has been overridden`);
-            HttpError._types[errorType.type] = errorType;
-        }
-    }
-
-    private static _types: Map<string, HttpErrorType>;
-
-    private static initTypes() {
-        const errors = {
-            'timeout': {
-                message: "The connection was interrupted or has timed out"
-            },
-            'default': {
-                status: 500,
-                message: "An unknown error has been thrown"
-            },
-            'internal_error': {
-                status: 500,
-                message: "An internal error has occurred"
-            },
-            'not_found': {
-                status: 404,
-                message: "The requested resource hasn't been found"
-            },
-            'unauthorized': {
-                status: 403
-            },
-            'malformed_query': {
-                status: 400
-            },
-            'already_exists': {
-                status: 409,
-                message: "A resource with the same key already exists"
-            },
-            'token_expired': {
-                status: 410
-            },
-            'wrong_credentials': {
-                status: 401
-            }
-          };
-
-        HttpError._types = new Map<string, HttpErrorType>();
-
-        for (const errorName in errors) {
-            if (errors.hasOwnProperty(errorName)) {
-                const error = errors[errorName];
-                HttpError.addType({
-                    code: error.status,
-                    type: errorName,
-                    message: error.message
-                });
-            }
-        }
-    }
+    private static _types: Map<string, HttpErrorType> = new Map<string, HttpErrorType>();
 
     /*
      *  Instance members
@@ -93,13 +29,10 @@ export class HttpError extends Error {
     public readonly type: HttpErrorType;
 
     constructor(errorType?: HttpErrorType | string | number) {
-        // Initialize error list
-        if (!HttpError._types) { HttpError.initTypes(); }
-
         // Find error type
         let error: HttpErrorType;
         if (!errorType) {
-            error = HttpError._types['default'];
+            error = HttpError._types.get('default');
         } else if (typeof errorType === 'string') {
             error = errorType = HttpError._types[errorType];
         } else if (typeof errorType === 'number') {

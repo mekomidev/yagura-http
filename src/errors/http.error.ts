@@ -43,10 +43,8 @@ export class HttpError extends Error {
                     code: errorType
                 }
             }
-        }
-
-        if (!error) {
-            throw new Error(`Unknown error type "${errorType.toString()}"`);
+        } else {
+            error = errorType;
         }
 
         // Compose error string
@@ -60,6 +58,6 @@ export class HttpError extends Error {
     }
 
     public sendResponse(res: Response) {
-        res.status(this.type.code || 500).send({ error: this.type.type });
+        res.status(this.type.code || 500).send(this.type);
     }
 }

@@ -6,6 +6,7 @@ import 'mocha';
 // import * as sinon from 'sinon';
 import * as chai from 'chai';
 import chaiHttp = require('chai-http');
+import { ErrorResponseBodyType } from '../src/request';
 const expect = chai.expect;
 
 // import 'clarify';
@@ -78,6 +79,20 @@ describe('HttpApiLayer', () => {
         public declareRoutes(router: HttpRouter) {
             router.route('/my-route').get(() => {
                 throw new HttpError(400);
+            })
+        }
+    }
+
+    class HttpErrorBodyApiLayer extends HttpApiLayer {
+        errorObject = new HttpError({
+            code: 404,
+            type: 'not_found',
+            message: 'resource not found'
+        });
+
+        public declareRoutes(router: HttpRouter) {
+            router.route('/error').get(() => {
+                throw this.errorObject;
             })
         }
     }
@@ -193,6 +208,30 @@ describe('HttpApiLayer', () => {
         expect(resPut).to.have.status(200);
         expect(resPost).to.have.status(200);
         expect(resDelete).to.have.status(200);
+    });
+
+    it("should respond with the error\'s object type as the response\'s body", async () => {
+        const apiLayer = new HttpErrorBodyApiLayer();
+        app = await Yagura.start([apiLayer], [new HttpServerService({ ...config, errorBodyContent: ErrorResponseBodyType.ErrorTypeObject })]);
+        const res = await chai.request((app.getService<HttpServerService>('HttpServer') as any)._express).get('/error');
+
+        expect(res.text).to.be.eq(JSON.stringify(apiLayer.errorObject.type));
+    });
+
+    it("should respond with the error\'s message as the response\'s body", async () => {
+        const apiLayer = new HttpErrorBodyApiLayer();
+        app = await Yagura.start([apiLayer], [new HttpServerService({ ...config, errorBodyContent: ErrorResponseBodyType.ErrorTypeMessage })]);
+        const res = await chai.request((app.getService<HttpServerService>('HttpServer') as any)._express).get('/error');
+
+        expect(res.text).to.be.eq(apiLayer.errorObject.type.message);
+    });
+
+    it("should respond with the error\'s type as the response\'s body", async () => {
+        const apiLayer = new HttpErrorBodyApiLayer();
+        app = await Yagura.start([apiLayer], [new HttpServerService({ ...config, errorBodyContent: ErrorResponseBodyType.ErrorTypeString })]);
+        const res = await chai.request((app.getService<HttpServerService>('HttpServer') as any)._express).get('/error');
+
+        expect(res.text).to.be.eq(apiLayer.errorObject.type.type);
     });
 
     // TODO: find-my-way doesn't support this as of now (https://github.com/delvedor/find-my-way/issues/75)

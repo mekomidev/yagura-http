@@ -1,6 +1,6 @@
 import { Service, Logger, promiseTimeout } from '@yagura/yagura';
 import { HttpError, HttpErrorType } from './errors/http.error';
-import { HttpRequest } from './request';
+import { ErrorResponseBodyType, HttpRequest } from './request';
 
 import { Express as ExpressApp } from 'express';
 import * as express from 'express';
@@ -15,6 +15,7 @@ export interface HttpServerConfig {
     errorCodes?: HttpErrorType[];
     defaultError: string | number;
     expressSettings?: {[key: string]: any};
+    errorBodyContent?: ErrorResponseBodyType;
 }
 
 const defaultErrors: HttpErrorType[] = [
@@ -120,7 +121,7 @@ export class HttpServerService extends Service {
             const startTime = Date.now();
 
             try {
-                await promiseTimeout(this.config.timeout, this.yagura.dispatch(new HttpRequest({ req, res })), true);
+                await promiseTimeout(this.config.timeout, this.yagura.dispatch(new HttpRequest({ req, res, config: { errorBodyConfig: this.config.errorBodyContent } })), true);
             } catch (e) {
                 // catch only timeout errors
                 this.logger.error(`[HTTP] request timed out`);

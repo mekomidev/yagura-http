@@ -6,17 +6,13 @@ import { Response, Request } from 'express';
 export interface HttpEventData {
     req: Request;
     res: Response;
-    config?: HttpRequestCustomConfig;
+    errorBodyType: ErrorResponseBodyType;
 }
 
 export enum ErrorResponseBodyType {
-    ErrorTypeObject,
-    ErrorTypeString,
-    ErrorTypeMessage
-}
-
-export interface HttpRequestCustomConfig {
-    errorBodyConfig: ErrorResponseBodyType;
+    Object,
+    Type,
+    Message
 }
 
 /**
@@ -25,12 +21,10 @@ export interface HttpRequestCustomConfig {
  */
 export class HttpRequest extends YaguraEvent {
     public readonly data: HttpEventData;
-    private readonly config: HttpRequestCustomConfig;
 
     constructor(data: HttpEventData) {
         super(data);
         this.data.res.statusCode = -1;
-        this.config = data.config;
     }
 
     // Response methods
@@ -54,7 +48,6 @@ export class HttpRequest extends YaguraEvent {
      * Send a response to this [HttpRequest] based on an [Error]
      *
      * @param {Error} err The error to be parsed into a response
-     * @param {ErrorResponseBodyType} bodyType Enum to choose what to fill the response body with
      */
     public async sendError(err: Error): Promise<Response> {
         if(!this.canSend) {
@@ -62,14 +55,14 @@ export class HttpRequest extends YaguraEvent {
         }
 
         if (err instanceof HttpError) {
-            switch (this.config.errorBodyConfig) {
-                case ErrorResponseBodyType.ErrorTypeObject:
+            switch (this.data.errorBodyType) {
+                case ErrorResponseBodyType.Object:
                     this.data.res.writeHead(err.type.code).write(JSON.stringify(err.type));
                     break;
-                case ErrorResponseBodyType.ErrorTypeMessage:
+                case ErrorResponseBodyType.Message:
                     this.data.res.writeHead(err.type.code).write(err.type.message);
                     break;
-                default: // ErrorResponseBodyType.ErrorTypeString
+                case ErrorResponseBodyType.Type:
                     this.data.res.writeHead(err.type.code).write(err.type.type);
                     break;
             }

@@ -16,7 +16,8 @@ describe('HttpApiLayer', () => {
         port: 30000,
         timeout: 1000,
         debugTime: true,
-        defaultError: 500
+        defaultError: 500,
+        errorBodyContent: ErrorResponseBodyType.Type
     };
 
     class ExampleApiLayer extends HttpApiLayer {
@@ -212,7 +213,7 @@ describe('HttpApiLayer', () => {
 
     it("should respond with the error\'s object type as the response\'s body", async () => {
         const apiLayer = new HttpErrorBodyApiLayer();
-        app = await Yagura.start([apiLayer], [new HttpServerService({ ...config, errorBodyContent: ErrorResponseBodyType.ErrorTypeObject })]);
+        app = await Yagura.start([apiLayer], [new HttpServerService({ ...config, errorBodyContent: ErrorResponseBodyType.Object })]);
         const res = await chai.request((app.getService<HttpServerService>('HttpServer') as any)._express).get('/error');
 
         expect(res.text).to.be.eq(JSON.stringify(apiLayer.errorObject.type));
@@ -220,7 +221,7 @@ describe('HttpApiLayer', () => {
 
     it("should respond with the error\'s message as the response\'s body", async () => {
         const apiLayer = new HttpErrorBodyApiLayer();
-        app = await Yagura.start([apiLayer], [new HttpServerService({ ...config, errorBodyContent: ErrorResponseBodyType.ErrorTypeMessage })]);
+        app = await Yagura.start([apiLayer], [new HttpServerService({ ...config, errorBodyContent: ErrorResponseBodyType.Message })]);
         const res = await chai.request((app.getService<HttpServerService>('HttpServer') as any)._express).get('/error');
 
         expect(res.text).to.be.eq(apiLayer.errorObject.type.message);
@@ -228,7 +229,7 @@ describe('HttpApiLayer', () => {
 
     it("should respond with the error\'s type as the response\'s body", async () => {
         const apiLayer = new HttpErrorBodyApiLayer();
-        app = await Yagura.start([apiLayer], [new HttpServerService({ ...config, errorBodyContent: ErrorResponseBodyType.ErrorTypeString })]);
+        app = await Yagura.start([apiLayer], [new HttpServerService({ ...config, errorBodyContent: ErrorResponseBodyType.Type })]);
         const res = await chai.request((app.getService<HttpServerService>('HttpServer') as any)._express).get('/error');
 
         expect(res.text).to.be.eq(apiLayer.errorObject.type.type);
@@ -277,7 +278,7 @@ describe('HttpApiLayer', () => {
                 return Promise.resolve(res);
             }
             public create(input: Partial<number>): Promise<CrudResponse<number>> {
-                const id = this.data.push(input) - 1;
+                // const id = this.data.push(input) - 1;
                 const res: CrudResponse<number> = { code: 201, data: input };
 
                 return Promise.resolve(res);

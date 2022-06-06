@@ -54,8 +54,9 @@ export abstract class HttpApiLayer extends Layer {
         try {
             await this._router.handle(event);
         } catch (err) {
+            const error: Error = err;
             this.yagura.getService<Logger>('Logger').error(colors.red("[HTTP]") + ` ${event.data.req.method} ${event.data.req.path} responded with an error:\n${(err as Error).stack.toString().dim}`);
-            if(event.canSend) await event.sendError(err);
+            if(event.canSend) await event.sendError(error);
         }
 
         // Pass HTTP event further down if not handled

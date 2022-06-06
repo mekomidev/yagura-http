@@ -6,6 +6,7 @@
     "types": "lib/declarations/index.d.ts",
     "scripts": {
         "clean": "rm -rf ./lib",
+        "prepare": "npm run build",
         "build": "./node_modules/typescript/bin/tsc",
         "test": "eslint src/ && TS_NODE_PROJECT=\"tsconfig.test.json\" NODE_ENV=test nyc --reporter=lcov --reporter=text-summary mocha -s 1 --timeout 30000 -r ts-node/register ./test/**/*.test.ts",
         "release": "npm run test && npm run clean && npm run build && npm publish"

@@ -1,4 +1,4 @@
-import { HttpRequest } from './request';
+import { ErrorResponseBodyType, HttpRequest } from './request';
 import { HttpRouter, HttpRoute, CrudAdapter, CrudResponse, HttpMethod, HttpRouteCallback, HttpRouteFormattingError } from './routes';
 import { HttpServerService, HttpServerConfig } from './httpServer.service';
 import { HttpApiLayer, HttpApiConfig } from './httpApi.layer';
@@ -9,5 +9,6 @@ export {
     HttpServerConfig, HttpApiConfig,
     HttpRequest,
     HttpMethod, HttpRouteCallback, HttpRouter, HttpRoute, CrudAdapter, CrudResponse,
-    HttpRouteFormattingError, HttpError, HttpErrorType
+    HttpRouteFormattingError, HttpError, HttpErrorType,
+    ErrorResponseBodyType
 };

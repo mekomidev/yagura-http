@@ -6,6 +6,7 @@ import 'mocha';
 // import * as sinon from 'sinon';
 import * as chai from 'chai';
 import chaiHttp = require('chai-http');
+import { ErrorResponseBodyType } from '../src/request';
 const expect = chai.expect;
 
 // import 'clarify';
@@ -15,7 +16,8 @@ describe('HttpApiLayer', () => {
         port: 30000,
         timeout: 1000,
         debugTime: true,
-        defaultError: 500
+        defaultError: 500,
+        errorBodyContent: ErrorResponseBodyType.Type
     };
 
     class ExampleApiLayer extends HttpApiLayer {
@@ -78,6 +80,20 @@ describe('HttpApiLayer', () => {
         public declareRoutes(router: HttpRouter) {
             router.route('/my-route').get(() => {
                 throw new HttpError(400);
+            })
+        }
+    }
+
+    class HttpErrorBodyApiLayer extends HttpApiLayer {
+        errorObject = new HttpError({
+            code: 404,
+            type: 'not_found',
+            message: 'resource not found'
+        });
+
+        public declareRoutes(router: HttpRouter) {
+            router.route('/error').get(() => {
+                throw this.errorObject;
             })
         }
     }
@@ -195,6 +211,38 @@ describe('HttpApiLayer', () => {
         expect(resDelete).to.have.status(200);
     });
 
+    it("should respond with the error\'s object type when using the default configuration", async () => {
+        const apiLayer = new HttpErrorBodyApiLayer();
+        app = await Yagura.start([apiLayer], [new HttpServerService()]);
+        const res = await chai.request((app.getService<HttpServerService>('HttpServer') as any)._express).get('/error');
+
+        expect(res.text).to.be.eq(apiLayer.errorObject.type.type);
+    });
+
+    it("should respond with the error\'s object type as the response\'s body", async () => {
+        const apiLayer = new HttpErrorBodyApiLayer();
+        app = await Yagura.start([apiLayer], [new HttpServerService({ ...config, errorBodyContent: ErrorResponseBodyType.Object })]);
+        const res = await chai.request((app.getService<HttpServerService>('HttpServer') as any)._express).get('/error');
+
+        expect(res.text).to.be.eq(JSON.stringify(apiLayer.errorObject.type));
+    });
+
+    it("should respond with the error\'s message as the response\'s body", async () => {
+        const apiLayer = new HttpErrorBodyApiLayer();
+        app = await Yagura.start([apiLayer], [new HttpServerService({ ...config, errorBodyContent: ErrorResponseBodyType.Message })]);
+        const res = await chai.request((app.getService<HttpServerService>('HttpServer') as any)._express).get('/error');
+
+        expect(res.text).to.be.eq(apiLayer.errorObject.type.message);
+    });
+
+    it("should respond with the error\'s type as the response\'s body", async () => {
+        const apiLayer = new HttpErrorBodyApiLayer();
+        app = await Yagura.start([apiLayer], [new HttpServerService({ ...config, errorBodyContent: ErrorResponseBodyType.Type })]);
+        const res = await chai.request((app.getService<HttpServerService>('HttpServer') as any)._express).get('/error');
+
+        expect(res.text).to.be.eq(apiLayer.errorObject.type.type);
+    });
+
     // TODO: find-my-way doesn't support this as of now (https://github.com/delvedor/find-my-way/issues/75)
     // it("should respond with 405 when method missing", async () => {
     //     app = await Yagura.start([ new ErrorApiLayer() ], [ new HttpServerService(config) ]);
@@ -238,7 +286,7 @@ describe('HttpApiLayer', () => {
                 return Promise.resolve(res);
             }
             public create(input: Partial<number>): Promise<CrudResponse<number>> {
-                const id = this.data.push(input) - 1;
+                // const id = this.data.push(input) - 1;
                 const res: CrudResponse<number> = { code: 201, data: input };
 
                 return Promise.resolve(res);

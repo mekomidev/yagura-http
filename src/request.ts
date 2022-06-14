@@ -32,7 +32,12 @@ export class HttpRequest extends YaguraEvent {
             throw new Error("HTTP headers have already been written");
         }
 
-        this.data.res.status(status).send(data);
+
+        // NOTE: calling res.send() with a number causes that number to be set as the status; this is a bug and needs to be reported to expressjs/types
+        if(typeof data === 'number')
+            data = data.toString(10);
+
+        await new Promise((resolve) => { this.data.res.status(status).send(data).end(resolve) });
         await this.consume();
         return this.data.res;
     }

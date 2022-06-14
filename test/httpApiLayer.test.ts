@@ -212,63 +212,46 @@ describe('HttpApiLayer', () => {
 
     // CrudAdapter
     describe('CrudAdapter', () => {
-        class DataAdapter implements CrudAdapter<number> {
+        interface DataQuery {
+            even: string;
+            odd: string;
+        }
+
+        class DataAdapter implements CrudAdapter<number, string, DataQuery> {
             private data: number[] = [0, 1, 2, 3, 4];
 
-            public getMany(query: any): Promise<CrudResponse<number[]>> {
+            public async getMany(query: DataQuery): Promise<number[]> {
                 const result: number[] = this.data.slice();
-                let res: CrudResponse<number[]>;
 
                 if(query.even === 'true' || query.odd === 'false') {
-                    res = { code: 200, data: result.filter((v) => v % 2 === 0) };
+                    return result.filter((v) => v % 2 === 0);
                 } else if(query.even === 'false' || query.odd === 'true') {
-                    res = { code: 200, data: result.filter((v) => v % 2 === 1) };
+                    return result.filter((v) => v % 2 === 1);
                 } else {
-                    res = { code: 200, data: result };
+                    return result;
                 }
-
-                return Promise.resolve(res);
             }
-            public getOne(id: any): Promise<CrudResponse<number>> {
-                id = Number.parseInt(id, 10);
-                let res;
+            public async getOne(id: string | number): Promise<number> {
+                id = Number.parseInt(id as string, 10);
                 const result: number = this.data[id];
-                if(result === undefined) {
-                    res = { code: 404, data: undefined };
-                } else {
-                    res = { code: 200, data: result.toString(10) };
-                }
-
-                return Promise.resolve(res);
+                return result;
             }
-            public create(input: Partial<number>): Promise<CrudResponse<number>> {
+            public async create(input: Partial<number>): Promise<number> {
                 const id = this.data.push(input) - 1;
-                const res: CrudResponse<number> = { code: 201, data: input };
-
-                return Promise.resolve(res);
+                return input;
             }
-            public update(id: any, input: Partial<number>): Promise<CrudResponse<number>> {
-                id = Number.parseInt(id, 10);
-                let res;
-                if(this.data[id] !== undefined) {
-                    this.data[id] = input;
-                    res = { code: 200, data: input.toString(10) }
-                } else {
-                    res = { code: 404, data: undefined };
-                }
+            public async update(id: string | number, input: Partial<number>): Promise<number> {
+                id = Number.parseInt(id as string, 10);
 
-                return Promise.resolve(res);
+                if(this.data[id] !== undefined) {
+                    return this.data[id] = input;
+                } else {
+                    throw new HttpError(404);
+                }
             }
-            public delete(id: any): Promise<CrudResponse<number | void>> {
-                id = Number.parseInt(id, 10);
-                let res;
-                if(this.data[id] !== undefined) {
-                    res = { code: 200 }
-                } else {
-                    res = { code: 404 };
-                }
-
-                return Promise.resolve(res);
+            public async delete(id: string | number): Promise<number | void> {
+                id = Number.parseInt(id as string, 10);
+                return this.data[id];
             }
         }
 
@@ -340,6 +323,7 @@ describe('HttpApiLayer', () => {
                 .delete('/data/0');
 
             expect(res).to.have.status(200);
+            expect(res.text).to.be.eq('0');
         });
 
         // afterEach(async () => {

@@ -50,37 +50,44 @@ export abstract class HttpRoute {
      * @returns itself, for chaining
      * @experimental
      */
-    public model<D>(model: CrudAdapter<D>): HttpRoute {
+    public model<D, I, Q>(model: CrudAdapter<D, I, Q>): HttpRoute {
         // GET many
         this.get(async (event: HttpRequest) => {
-            const res = await model.getMany(event.data.req.query);
-            await event.send(res.code, res.data);
+            const res = await model.getMany(event.data.req.query as unknown as Q);
+            const hasRes: boolean = typeof res !== 'undefined' && res.length > 0;
+            await event.send(hasRes ? 200 : 404, hasRes ? res : null);
         });
 
         // GET one
         this.route('/:id').get(async (event: HttpRequest) => {
-            const res = await model.getOne(event.data.req.params.id);
-            await event.send(res.code, res.data);
+            const res = await model.getOne(event.data.req.params.id as unknown as I);
+            const hasRes: boolean = typeof res !== 'undefined';
+            await event.send(hasRes ? 200 : 404, hasRes ? res : null);
         });
 
         // POST (create)
         this.post(async (event) => {
             await new Promise(resolve => Express.raw()(event.data.req, event.data.res, resolve));
+            // TODO: implement validation
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             const res = await model.create(event.data.req.body);
-            await event.send(res.code, res.data);
+            await event.send(201, res);
         });
 
         // PUT (update)
         this.route('/:id').put(async (event) => {
             await new Promise(resolve => Express.raw()(event.data.req, event.data.res, resolve));
-            const res = await model.update(event.data.req.params.id, event.data.req.body);
-            await event.send(res.code, res.data);
+            // TODO: implement validation
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            const res = await model.update(event.data.req.params.id as unknown as I, event.data.req.body);
+            await event.send(200, res);
         });
 
         // DELETE one
         this.route('/:id').delete(async (event) => {
-            const res = await model.delete(event.data.req.params.id);
-            await event.send(res.code, res.data);
+            const res = await model.delete(event.data.req.params.id as unknown as I);
+            const hasRes: boolean = typeof res !== 'undefined';
+            await event.send(hasRes ? 200 : 204, hasRes ? res : null);
         });
 
         return this;
@@ -115,24 +122,11 @@ export abstract class HttpRouter {
 
 /**
  * Boilerplate interface for writing CRUD-structured resource request callbacks
- *
- * @experimental
  */
-export interface CrudAdapter<D> {
-    getMany(query: any): Promise<CrudResponse<D[]>>;
-    getOne(id: any): Promise<CrudResponse<D>>;
-    create(data: Partial<D>): Promise<CrudResponse<D>>;
-    update(id: any, data: Partial<D>): Promise<CrudResponse<D>>;
-    delete(id: any): Promise<CrudResponse<D | void>>;
-}
-
-/**
- * Response interface to be used with CrudAdapter callbacks
- *
- * @experimental
- */
-// TODO: consider eliminating this
-export interface CrudResponse<D> {
-    code?: number;
-    data: D;
+export interface CrudAdapter<D, I, Q> {
+    getMany(query: Q): Promise<D[]>;
+    getOne(id: I): Promise<D>;
+    create(data: Partial<D>): Promise<D>;
+    update(id: I, data: Partial<D>): Promise<D>;
+    delete(id: I): Promise<D | void>;
 }

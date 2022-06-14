@@ -211,6 +211,14 @@ describe('HttpApiLayer', () => {
         expect(resDelete).to.have.status(200);
     });
 
+    it("should respond with the error\'s object type when using the default configuration", async () => {
+        const apiLayer = new HttpErrorBodyApiLayer();
+        app = await Yagura.start([apiLayer], [new HttpServerService()]);
+        const res = await chai.request((app.getService<HttpServerService>('HttpServer') as any)._express).get('/error');
+
+        expect(res.text).to.be.eq(apiLayer.errorObject.type.type);
+    });
+
     it("should respond with the error\'s object type as the response\'s body", async () => {
         const apiLayer = new HttpErrorBodyApiLayer();
         app = await Yagura.start([apiLayer], [new HttpServerService({ ...config, errorBodyContent: ErrorResponseBodyType.Object })]);

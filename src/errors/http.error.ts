@@ -58,6 +58,6 @@ export class HttpError extends Error {
     }
 
     public sendResponse(res: Response) {
-        res.status(this.type.code || 500).send(this.type);
+        res.status(this.type.code ?? 500).send(this.type);
     }
 }

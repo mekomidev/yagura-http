@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { Yagura } from '@yagura/yagura';
 import { HttpServerConfig, HttpServerService } from '../src';

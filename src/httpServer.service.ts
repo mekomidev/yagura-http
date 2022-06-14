@@ -110,7 +110,7 @@ export class HttpServerService extends Service {
 
         // Apply settings
         for (const key in this.config.expressSettings) {
-            if (this.config.expressSettings.hasProperty(key)) {
+            if (Object.prototype.hasOwnProperty.call(this.config.expressSettings, key)) {
                 app.set(key, this.config.expressSettings[key]);
             }
         }
@@ -175,6 +175,6 @@ export class HttpServerService extends Service {
     /** Asks the HTTP server to stop gracefully. Times out after 5 seconds, then destroys the HTTP server ungracefully */
     public async stop(): Promise<void> {
         const stopPromise: Promise<void> = new Promise((resolve, reject) => this._server.close((err) => { if(err) reject(err); else resolve(); }));
-        return promiseTimeout(5000, stopPromise);
+        await promiseTimeout(5000, stopPromise);
     }
 }

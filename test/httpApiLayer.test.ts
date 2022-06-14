@@ -1,6 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/dot-notation */
+/* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { Yagura } from '@yagura/yagura';
-import { HttpApiLayer, HttpRouter, HttpServerConfig, HttpServerService, HttpRequest, CrudAdapter, CrudResponse, HttpError } from '../src';
+import { HttpApiLayer, HttpRouter, HttpServerConfig, HttpServerService, HttpRequest, CrudAdapter, HttpError } from '../src';
 
 import 'mocha';
 // import * as sinon from 'sinon';
@@ -90,8 +94,8 @@ describe('HttpApiLayer', () => {
 
     it("should respond to requests on the indicated route", async () => {
         app = await Yagura.start([ new ExampleApiLayer() ], [ new HttpServerService(config) ]);
+        const server = app.getService<HttpServerService>('HttpServer')['_express'];
 
-        const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
         const res = await chai.request(server)
             .get('/my-route');
 
@@ -100,8 +104,8 @@ describe('HttpApiLayer', () => {
 
     it("should respond with 404 when there's no route", async () => {
         app = await Yagura.start([ new ExampleApiLayer() ], [ new HttpServerService(config) ]);
+        const server = app.getService<HttpServerService>('HttpServer')['_express'];
 
-        const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
         const res = await chai.request(server)
             .get('/inexistent');
 
@@ -110,8 +114,8 @@ describe('HttpApiLayer', () => {
 
     it("should respond with 500 when an error occurs", async () => {
         app = await Yagura.start([ new ErrorApiLayer() ], [ new HttpServerService(config) ]);
+        const server = app.getService<HttpServerService>('HttpServer')['_express'];
 
-        const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
         const res = await chai.request(server)
             .get('/my-route');
 
@@ -120,8 +124,8 @@ describe('HttpApiLayer', () => {
 
     it('should respond with thrown HttpError', async () => {
         app = await Yagura.start([ new HttpErrorApiLayer() ], [ new HttpServerService(config) ]);
+        const server = app.getService<HttpServerService>('HttpServer')['_express'];
 
-        const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
         const res = await chai.request(server)
             .get('/my-route');
 
@@ -131,8 +135,8 @@ describe('HttpApiLayer', () => {
     // routing
     it("should follow a complex path with more than one subpath", async () => {
         app = await Yagura.start([ new LongApiLayer() ], [ new HttpServerService(config) ]);
+        const server = app.getService<HttpServerService>('HttpServer')['_express'];
 
-        const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
         const res = await chai.request(server)
             .get('/my-route2/is/long');
 
@@ -141,8 +145,8 @@ describe('HttpApiLayer', () => {
 
     it("should handle multiple routes per router", async () => {
         app = await Yagura.start([ new MultipleApiLayer() ], [ new HttpServerService(config) ]);
+        const server = app.getService<HttpServerService>('HttpServer')['_express'];
 
-        const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
         const resA = await chai.request(server)
             .get('/routeA');
 
@@ -159,8 +163,8 @@ describe('HttpApiLayer', () => {
 
     it("should handle multiple layers with the correct priority", async () => {
         app = await Yagura.start([ new OverridingApiLayer(), new MultipleApiLayer() ], [ new HttpServerService(config) ]);
+        const server = app.getService<HttpServerService>('HttpServer')['_express'];
 
-        const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
         const resA = await chai.request(server)
             .get('/routeA');
 
@@ -178,7 +182,7 @@ describe('HttpApiLayer', () => {
     // methods
     it("should respond to all methods when declared", async () => {
         app = await Yagura.start([ new AllApiLayer() ], [ new HttpServerService(config) ]);
-        const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+        const server = app.getService<HttpServerService>('HttpServer')['_express'];
 
         const resGet = await chai.request(server)
             .get('/my-route');
@@ -276,7 +280,7 @@ describe('HttpApiLayer', () => {
 
         it("should mount as route", async () => {
             app = await Yagura.start([ new CrudResourceLayer() ], [ new HttpServerService(config) ]);
-            const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+            const server = app.getService<HttpServerService>('HttpServer')['_express'];
             expect(app).to.be.instanceOf(Yagura);
 
             const res = await chai.request(server)
@@ -287,8 +291,7 @@ describe('HttpApiLayer', () => {
 
         it("should respond to GET method for one item", async () => {
             app = await Yagura.start([ new CrudResourceLayer() ], [ new HttpServerService(config) ]);
-
-            const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+            const server = app.getService<HttpServerService>('HttpServer')['_express'];
             const res = await chai.request(server)
                 .get('/data/0');
 
@@ -298,8 +301,7 @@ describe('HttpApiLayer', () => {
 
         it("should respond to GET method for many items with a query", async () => {
             app = await Yagura.start([ new CrudResourceLayer() ], [ new HttpServerService(config) ]);
-
-            const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+            const server = app.getService<HttpServerService>('HttpServer')['_express'];
             const res = await chai.request(server)
                 .get('/data?even=true');
 
@@ -309,8 +311,7 @@ describe('HttpApiLayer', () => {
 
         it("should respond to POST method", async () => {
             app = await Yagura.start([ new CrudResourceLayer() ], [ new HttpServerService(config) ]);
-
-            const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+            const server = app.getService<HttpServerService>('HttpServer')['_express'];
             const res = await chai.request(server)
                 .post('/data')
                 .set('content-type', 'text/plain')
@@ -322,8 +323,7 @@ describe('HttpApiLayer', () => {
 
         it("should respond to PUT method", async () => {
             app = await Yagura.start([ new CrudResourceLayer() ], [ new HttpServerService(config) ]);
-
-            const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+            const server = app.getService<HttpServerService>('HttpServer')['_express'];
             const res = await chai.request(server)
                 .put('/data/0')
                 .set('content-type', 'text/plain')
@@ -335,8 +335,7 @@ describe('HttpApiLayer', () => {
 
         it("should respond to DELETE method", async () => {
             app = await Yagura.start([ new CrudResourceLayer() ], [ new HttpServerService(config) ]);
-
-            const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+            const server = app.getService<HttpServerService>('HttpServer')['_express'];
             const res = await chai.request(server)
                 .delete('/data/0');
 

@@ -11,6 +11,7 @@ import 'mocha';
 import * as sinon from 'sinon';
 import * as chai from 'chai';
 import chaiHttp = require('chai-http');
+import { ErrorResponseBodyType } from '../src/request';
 const expect = chai.expect;
 
 // import 'clarify';
@@ -20,7 +21,8 @@ describe('HttpServer', () => {
         port: 30000,
         timeout: 1000,
         debugTime: true,
-        defaultError: 500
+        defaultError: 500,
+        errorBodyContent: ErrorResponseBodyType.Type
     };
 
     before(() => {
@@ -46,7 +48,7 @@ describe('HttpServer', () => {
         // use spy
         const spy = sinon.spy(app, 'dispatch');
 
-        const res = await chai.request(server)
+        await chai.request(server)
             .get('/');
 
         expect(spy.called).to.be.eq(true);

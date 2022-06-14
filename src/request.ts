@@ -6,6 +6,13 @@ import { Response, Request } from 'express';
 export interface HttpEventData {
     req: Request;
     res: Response;
+    errorBodyType: ErrorResponseBodyType;
+}
+
+export enum ErrorResponseBodyType {
+    Object,
+    Type,
+    Message
 }
 
 /**
@@ -53,9 +60,19 @@ export class HttpRequest extends YaguraEvent {
         }
 
         if (err instanceof HttpError) {
-            this.data.res.writeHead(err.type.code).write(err.type.type);
+            switch (this.data.errorBodyType) {
+                case ErrorResponseBodyType.Object:
+                    this.data.res.writeHead(err.type.code).write(JSON.stringify(err.type));
+                    break;
+                case ErrorResponseBodyType.Message:
+                    this.data.res.writeHead(err.type.code).write(err.type.message);
+                    break;
+                case ErrorResponseBodyType.Type:
+                    this.data.res.writeHead(err.type.code).write(err.type.type);
+                    break;
+            }
         } else {
-            if(process.env.NODE_ENV === 'production') {
+            if (process.env.NODE_ENV === 'production') {
                 this.data.res.writeHead(500);
             } else {
                 this.data.res.writeHead(500).write(err.stack);

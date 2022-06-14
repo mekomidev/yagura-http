@@ -1,6 +1,6 @@
 import { Service, Logger, promiseTimeout } from '@yagura/yagura';
 import { HttpError, HttpErrorType } from './errors/http.error';
-import { HttpRequest } from './request';
+import { ErrorResponseBodyType, HttpRequest } from './request';
 
 import { Express as ExpressApp } from 'express';
 import * as express from 'express';
@@ -15,7 +15,17 @@ export interface HttpServerConfig {
     errorCodes?: HttpErrorType[];
     defaultError: string | number;
     expressSettings?: {[key: string]: any};
+    errorBodyContent: ErrorResponseBodyType;
 }
+
+const defaultConfig: HttpServerConfig = {
+    port: 3000,
+    timeout: 60000,
+    debugTime: false,
+    defaultError: 500,
+    errorBodyContent: ErrorResponseBodyType.Type
+};
+
 
 const defaultErrors: HttpErrorType[] = [
     {
@@ -78,7 +88,7 @@ export class HttpServerService extends Service {
      * @param {HttpLayerConfig} config
      * @param {[() => RequestHandler]} middleware Ordered array of Express.js middleware factory functions to be mounted
      */
-    constructor(config: HttpServerConfig) {
+    constructor(config: HttpServerConfig = defaultConfig) {
         super('HttpServer', 'yagura');
         this.config = config;
 
@@ -120,7 +130,7 @@ export class HttpServerService extends Service {
             const startTime = Date.now();
 
             try {
-                await promiseTimeout(this.config.timeout, this.yagura.dispatch(new HttpRequest({ req, res })), true);
+                await promiseTimeout(this.config.timeout, this.yagura.dispatch(new HttpRequest({ req, res, errorBodyType: this.config.errorBodyContent })), true);
             } catch (e) {
                 // catch only timeout errors
                 this.logger.error(`[HTTP] request timed out`);

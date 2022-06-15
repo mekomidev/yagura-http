@@ -11,7 +11,7 @@ import { Server } from 'node:http';
 export interface HttpServerConfig {
     port: number;
     timeout: number;
-    debugTime: boolean;
+    debugTime?: boolean;
     errorCodes?: HttpErrorType[];
     defaultError: string | number;
     expressSettings?: {[key: string]: any};

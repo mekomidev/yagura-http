@@ -266,10 +266,12 @@ describe('HttpApiLayer', () => {
         app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
 
         const spy = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'error');
 
         await chai.request((service as any)._express).get('/error');
 
         expect(spy.called).to.be.eq(true);
+        expect(spy2.called).to.be.eq(false);
     });
 
     it('should support specifying error logging level by the error code', async () => {
@@ -277,10 +279,12 @@ describe('HttpApiLayer', () => {
         app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
 
         const spy = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'error');
 
         await chai.request((service as any)._express).get('/error');
 
         expect(spy.called).to.be.eq(true);
+        expect(spy2.called).to.be.eq(false);
     });
 
     it('should support specifying error logging level by the error type', async () => {
@@ -288,10 +292,12 @@ describe('HttpApiLayer', () => {
         app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
 
         const spy = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'error');
 
         await chai.request((service as any)._express).get('/error');
 
         expect(spy.called).to.be.eq(true);
+        expect(spy2.called).to.be.eq(false);
     });
 
     it('should support specifying multiple filtering parameters', async () => {

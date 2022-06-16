@@ -244,15 +244,15 @@ describe('HttpApiLayer', () => {
     });
 
     // TODO: find-my-way doesn't support this as of now (https://github.com/delvedor/find-my-way/issues/75)
-    // it("should respond with 405 when method missing", async () => {
-    //     app = await Yagura.start([ new ErrorApiLayer() ], [ new HttpServerService(config) ]);
+    it("should respond with 405 when method missing", async () => {
+        app = await Yagura.start([ new ErrorApiLayer() ], [ new HttpServerService(config) ]);
 
-    //     const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
-    //     const res = await chai.request(server)
-    //         .delete('/my-route');
+        const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+        const res = await chai.request(server)
+            .delete('/my-route');
 
-    //     expect(res).to.have.status(405);
-    // });
+        expect(res).to.have.status(405);
+    });
 
     // CrudAdapter
     describe('CrudAdapter', () => {

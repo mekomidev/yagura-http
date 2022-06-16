@@ -303,7 +303,7 @@ describe('HttpApiLayer', () => {
     it('should support specifying multiple filtering parameters', async () => {
         const service = new HttpServerService({
             ...config,
-            errorLogTypes: [{ code: 404, level: LogLevel.warn }, { code: 404, type: 'not_found', level: LogLevel.info }]
+            errorLogTypes: [{ code: 404, type: 'not_found', level: LogLevel.info }]
         });
         app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
 
@@ -364,7 +364,7 @@ describe('HttpApiLayer', () => {
         expect(spy2.called).to.be.eq(true);
     });
 
-    it('should log errors as such with the default configuration', async () => {
+    it('should log errors with level error with the default configuration', async () => {
         const service = new HttpServerService();
         app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
 
@@ -375,10 +375,44 @@ describe('HttpApiLayer', () => {
         expect(spy.called).to.be.eq(true);
     });
 
-    it('should respect logging level order priority', async () => {
+    it('should respect logging level order priority by code', async () => {
+        const service = new HttpServerService({
+            ...config,
+            errorLogTypes: [{ code: 404, level: LogLevel.error }, { code: 404, level: LogLevel.warn }]
+        });
+
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'error');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(false);
+        expect(spy2.called).to.be.eq(true);
+    });
+
+    it('should respect logging level order priority by code and type', async () => {
         const service = new HttpServerService({
             ...config,
             errorLogTypes: [{ code: 404, level: LogLevel.error }, { type: 'not_found', level: LogLevel.warn }]
+        });
+
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'error');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(false);
+        expect(spy2.called).to.be.eq(true);
+    });
+
+    it('should respect logging level order priority by code and range', async () => {
+        const service = new HttpServerService({
+            ...config,
+            errorLogTypes: [{ code: 404, level: LogLevel.error }, { range: 400, level: LogLevel.warn }]
         });
 
         app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);

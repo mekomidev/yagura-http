@@ -5,6 +5,8 @@ export class HttpRouteFormattingError extends Error {}
 
 export type HttpRouteCallback = (event: HttpRequest) => Promise<void>;
 
+export type HttpRouteHandler = Record<HttpMethod, HttpRouteCallback>;
+
 export type HttpMethod = 'ALL' | 'HEAD' | 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS';
 
 export abstract class HttpRoute {
@@ -105,6 +107,8 @@ export abstract class HttpRouter {
      * @returns {boolean} whether an appropriate route was found in the tree
      */
     public abstract handle(event: HttpRequest): Promise<boolean>;
+
+    public abstract declareHandler(url: string, method: HttpMethod, handler: HttpRouteCallback): void;
 
     public abstract prettyPrint(): string;
 }

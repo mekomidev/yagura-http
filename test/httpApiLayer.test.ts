@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import { Yagura } from '@yagura/yagura';
-import { HttpApiLayer, HttpRouter, HttpServerConfig, HttpServerService, HttpRequest, CrudAdapter, CrudResponse, HttpError } from '../src';
+import { Logger, LogLevel, Yagura } from '@yagura/yagura';
+import { HttpApiLayer, HttpRouter, HttpServerConfig, HttpServerService, HttpRequest, CrudAdapter, CrudResponse, HttpError, ErrorResponseBodyType } from '../src';
 
 import 'mocha';
-// import * as sinon from 'sinon';
+import * as sinon from 'sinon';
 import * as chai from 'chai';
 import chaiHttp = require('chai-http');
-import { ErrorResponseBodyType } from '../src/request';
 const expect = chai.expect;
 
 // import 'clarify';
@@ -94,7 +93,15 @@ describe('HttpApiLayer', () => {
         public declareRoutes(router: HttpRouter) {
             router.route('/error').get(() => {
                 throw this.errorObject;
-            })
+            });
+
+            router.route('/error-500').get(() => {
+                throw new HttpError({
+                    code: 500,
+                    type: 'internal_error',
+                    message: 'internal server error'
+                });
+            });
         }
     }
 
@@ -244,15 +251,197 @@ describe('HttpApiLayer', () => {
     });
 
     // TODO: find-my-way doesn't support this as of now (https://github.com/delvedor/find-my-way/issues/75)
-    // it("should respond with 405 when method missing", async () => {
-    //     app = await Yagura.start([ new ErrorApiLayer() ], [ new HttpServerService(config) ]);
+    it("should respond with 405 when method missing", async () => {
+        app = await Yagura.start([ new ErrorApiLayer() ], [ new HttpServerService(config) ]);
 
-    //     const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
-    //     const res = await chai.request(server)
-    //         .delete('/my-route');
+        const server = (app.getService<HttpServerService>('HttpServer') as any)._express;
+        const res = await chai.request(server)
+            .delete('/my-route');
 
-    //     expect(res).to.have.status(405);
-    // });
+        expect(res).to.have.status(405);
+    });
+
+    it('should support specifying error logging level by the error code range', async () => {
+        const service = new HttpServerService({ ...config, errorLogTypes: [{ range: 400, level: LogLevel.warn }] });
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'error');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+        expect(spy2.called).to.be.eq(false);
+    });
+
+    it('should support specifying error logging level by the error code', async () => {
+        const service = new HttpServerService({ ...config, errorLogTypes: [{ code: 404, level: LogLevel.warn }] });
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'error');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+        expect(spy2.called).to.be.eq(false);
+    });
+
+    it('should support specifying error logging level by the error type', async () => {
+        const service = new HttpServerService({ ...config, errorLogTypes: [{ type: 'not_found', level: LogLevel.warn }] });
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'error');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+        expect(spy2.called).to.be.eq(false);
+    });
+
+    it('should support specifying multiple filtering parameters', async () => {
+        const service = new HttpServerService({
+            ...config,
+            errorLogTypes: [{ code: 404, type: 'not_found', level: LogLevel.info }]
+        });
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'info');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+    });
+
+    it('should support specifying multiple error logging configurations by code', async () => {
+        const service = new HttpServerService({
+            ...config,
+            errorLogTypes: [{ code: 404, level: LogLevel.warn }, { code: 500, level: LogLevel.error }]
+        });
+
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'error');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+        expect(spy2.called).to.be.eq(false);
+
+        spy.resetHistory();
+        spy2.resetHistory();
+
+        await chai.request((service as any)._express).get('/error-500');
+
+        expect(spy.called).to.be.eq(false);
+        expect(spy2.called).to.be.eq(true);
+    });
+
+    it('should support specifying multiple error logging configurations by range', async () => {
+        const service = new HttpServerService({
+            ...config,
+            errorLogTypes: [{ range: 400, level: LogLevel.warn }, { range: 500, level: LogLevel.error }]
+        });
+
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'error');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+        expect(spy2.called).to.be.eq(false);
+
+        spy.resetHistory();
+        spy2.resetHistory();
+
+        await chai.request((service as any)._express).get('/error-500');
+
+        expect(spy.called).to.be.eq(false);
+        expect(spy2.called).to.be.eq(true);
+    });
+
+    it('should log errors with level error with the default configuration', async () => {
+        const service = new HttpServerService();
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'error');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+    });
+
+    it('should respect logging level order priority by code', async () => {
+        const service = new HttpServerService({
+            ...config,
+            errorLogTypes: [{ code: 404, level: LogLevel.error }, { code: 404, level: LogLevel.warn }]
+        });
+
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'error');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(false);
+        expect(spy2.called).to.be.eq(true);
+    });
+
+    it('should respect logging level order priority by code and type', async () => {
+        const service = new HttpServerService({
+            ...config,
+            errorLogTypes: [{ code: 404, level: LogLevel.error }, { type: 'not_found', level: LogLevel.warn }]
+        });
+
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'error');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(false);
+        expect(spy2.called).to.be.eq(true);
+    });
+
+    it('should respect logging level order priority by code first and range second', async () => {
+        const service = new HttpServerService({
+            ...config,
+            errorLogTypes: [{ range: 400, level: LogLevel.warn }, { code: 404, level: LogLevel.error }]
+        });
+
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'error');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+        expect(spy2.called).to.be.eq(false);
+    });
+
+    it('should respect logging level order priority by range first and code second', async () => {
+        const service = new HttpServerService({
+            ...config,
+            errorLogTypes: [{ code: 404, level: LogLevel.error }, { range: 400, level: LogLevel.warn }]
+        });
+
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'error');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(false);
+        expect(spy2.called).to.be.eq(true);
+    });
 
     // CrudAdapter
     describe('CrudAdapter', () => {
@@ -274,7 +463,7 @@ describe('HttpApiLayer', () => {
                 return Promise.resolve(res);
             }
             public getOne(id: any): Promise<CrudResponse<number>> {
-                id = Number.parseInt(id, 10);
+                id = Number.parseInt(id as string, 10);
                 let res;
                 const result: number = this.data[id];
                 if(result === undefined) {
@@ -292,7 +481,7 @@ describe('HttpApiLayer', () => {
                 return Promise.resolve(res);
             }
             public update(id: any, input: Partial<number>): Promise<CrudResponse<number>> {
-                id = Number.parseInt(id, 10);
+                id = Number.parseInt(id as string, 10);
                 let res;
                 if(this.data[id] !== undefined) {
                     this.data[id] = input;
@@ -304,7 +493,7 @@ describe('HttpApiLayer', () => {
                 return Promise.resolve(res);
             }
             public delete(id: any): Promise<CrudResponse<number | void>> {
-                id = Number.parseInt(id, 10);
+                id = Number.parseInt(id as string, 10);
                 let res;
                 if(this.data[id] !== undefined) {
                     res = { code: 200 }

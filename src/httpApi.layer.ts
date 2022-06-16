@@ -5,6 +5,7 @@ import { HttpRequest } from './request';
 import { FmwRouter } from './routers/fmw.router';
 
 import * as colors from 'colors/safe';
+import { HttpServerService } from './httpServer.service';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface HttpApiConfig {
@@ -22,6 +23,7 @@ export abstract class HttpApiLayer extends Layer {
     public static readonly DEFAULT_CONFIGS: HttpApiConfig = Object.freeze({ options: { debugTime: true }});
 
     private _router: HttpRouter;
+    private _server: HttpServerService;
 
     constructor(config?: HttpApiConfig) {
         super(config ?? HttpApiLayer.DEFAULT_CONFIGS);
@@ -40,6 +42,8 @@ export abstract class HttpApiLayer extends Layer {
         if (process.env.NODE_ENV !== 'production') {
             this.yagura.getService<Logger>('Logger').debug(`${colors.green("[HTTP]")} routes declared;\n${this._router.prettyPrint().dim}`);
         }
+
+        this._server = this.yagura.getService<HttpServerService>('HttpServer');
     }
 
     /**
@@ -54,9 +58,7 @@ export abstract class HttpApiLayer extends Layer {
         try {
             await this._router.handle(event);
         } catch (err) {
-            const error: Error = err;
-            this.yagura.getService<Logger>('Logger').error(colors.red("[HTTP]") + ` ${event.data.req.method} ${event.data.req.path} responded with an error:\n${(err as Error).stack.toString().dim}`);
-            if(event.canSend) await event.sendError(error);
+            if (event.canSend) await this._server.sendError(event, err as Error);
         }
 
         // Pass HTTP event further down if not handled

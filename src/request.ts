@@ -1,18 +1,10 @@
 import { YaguraEvent } from '@yagura/yagura';
-import { HttpError } from './errors/http.error';
 
 import { Response, Request } from 'express';
 
 export interface HttpEventData {
     req: Request;
     res: Response;
-    errorBodyType: ErrorResponseBodyType;
-}
-
-export enum ErrorResponseBodyType {
-    Object,
-    Type,
-    Message
 }
 
 /**
@@ -40,40 +32,6 @@ export class HttpRequest extends YaguraEvent {
         }
 
         this.data.res.status(status).send(data);
-        await this.consume();
-        return this.data.res;
-    }
-
-    /**
-     * Send a response to this [HttpRequest] based on an [Error]
-     *
-     * @param {Error} err The error to be parsed into a response
-     */
-    public async sendError(err: Error): Promise<Response> {
-        if(!this.canSend) {
-            throw new Error("HTTP headers have already been written");
-        }
-
-        if (err instanceof HttpError) {
-            switch (this.data.errorBodyType) {
-                case ErrorResponseBodyType.Object:
-                    this.data.res.writeHead(err.type.code).write(JSON.stringify(err.type));
-                    break;
-                case ErrorResponseBodyType.Message:
-                    this.data.res.writeHead(err.type.code).write(err.type.message);
-                    break;
-                case ErrorResponseBodyType.Type:
-                    this.data.res.writeHead(err.type.code).write(err.type.type);
-                    break;
-            }
-        } else {
-            if (process.env.NODE_ENV === 'production') {
-                this.data.res.writeHead(500);
-            } else {
-                this.data.res.writeHead(500).write(err.stack);
-            }
-        }
-
         await this.consume();
         return this.data.res;
     }

@@ -1,6 +1,6 @@
-import { Service, Logger, promiseTimeout } from '@yagura/yagura';
+import { Service, Logger, promiseTimeout, LogLevel } from '@yagura/yagura';
 import { HttpError, HttpErrorType } from './errors/http.error';
-import { ErrorResponseBodyType, HttpRequest } from './request';
+import { HttpRequest } from './request';
 
 import { Express as ExpressApp } from 'express';
 import * as express from 'express';
@@ -11,11 +11,26 @@ import { Server } from 'node:http';
 export interface HttpServerConfig {
     port: number;
     timeout: number;
-    debugTime: boolean;
+    debugTime?: boolean;
     errorCodes?: HttpErrorType[];
     defaultError: string | number;
     expressSettings?: {[key: string]: any};
     errorBodyContent: ErrorResponseBodyType;
+    /** List of log levels for each error type; the later elements take priority */
+    errorLogTypes?: HttpErrorLogType[];
+}
+
+export enum ErrorResponseBodyType {
+    Object,
+    Type,
+    Message
+}
+
+interface HttpErrorLogType {
+    code?: number,
+    type?: string,
+    range?: 100|200|300|400|500,
+    level: LogLevel
 }
 
 const defaultConfig: HttpServerConfig = {
@@ -30,7 +45,7 @@ const defaultConfig: HttpServerConfig = {
 const defaultErrors: HttpErrorType[] = [
     {
         type: 'timeout',
-        code: 0,
+        code: 408,
         message: "The connection was interrupted or has timed out"
     },
     {
@@ -91,6 +106,7 @@ export class HttpServerService extends Service {
     constructor(config: HttpServerConfig = defaultConfig) {
         super('HttpServer', 'yagura');
         this.config = config;
+        this.config.errorLogTypes = this.config.errorLogTypes?.reverse(); // priority is now descending with ascending index
 
         // Initialize all defined error types
         defaultErrors.forEach((ec) => HttpError.addType(ec));
@@ -130,7 +146,7 @@ export class HttpServerService extends Service {
             const startTime = Date.now();
 
             try {
-                await promiseTimeout(this.config.timeout, this.yagura.dispatch(new HttpRequest({ req, res, errorBodyType: this.config.errorBodyContent })), true);
+                await promiseTimeout(this.config.timeout, this.yagura.dispatch(new HttpRequest({ req, res })), true);
             } catch (e) {
                 // catch only timeout errors
                 this.logger.error(`[HTTP] request timed out`);
@@ -180,6 +196,54 @@ export class HttpServerService extends Service {
                 resolve(true);
             });
         });
+    }
+
+    /**
+     * Send a response to the event [HttpRequest] based on the [Error]
+     *
+     * @param {HttpRequest} event The event generating the error
+     * @param {Error} err The error to be parsed into a response
+     */
+    public async sendError(event: HttpRequest, err: Error): Promise<express.Response> {
+        if (!event.canSend) {
+            throw new Error("HTTP headers have already been written");
+        }
+
+        const message: string = `[HTTP] ${event.data.req.method} ${event.data.req.path} responded with an error:\n`;
+
+        if (err instanceof HttpError) {
+            const httpMessage = `${message}${err.type.message}`;
+            const logType: HttpErrorLogType = this.config.errorLogTypes?.find(value =>
+                (!value.code || value.code === err.type.code) &&
+                (!value.range || value.range / 100 === Math.floor(err.type.code / 100)) &&
+                (!value.type || value.type === err.type.type)
+            );
+
+            this.logger[logType?.level ?? 'error'](httpMessage);
+
+            switch (this.config.errorBodyContent) {
+                case ErrorResponseBodyType.Object:
+                    event.data.res.writeHead(err.type.code).write(JSON.stringify(err.type));
+                    break;
+                case ErrorResponseBodyType.Message:
+                    event.data.res.writeHead(err.type.code).write(err.type.message);
+                    break;
+                case ErrorResponseBodyType.Type:
+                    event.data.res.writeHead(err.type.code).write(err.type.type);
+                    break;
+            }
+        } else {
+            this.logger.error(`${message}${(err).stack.toString().dim}`);
+
+            if (process.env.NODE_ENV === 'production') {
+                event.data.res.writeHead(500);
+            } else {
+                event.data.res.writeHead(500).write(err.stack);
+            }
+        }
+
+        await event.consume();
+        return event.data.res;
     }
 
     /** Asks the HTTP server to stop gracefully. Times out after 5 seconds, then destroys the HTTP server ungracefully */

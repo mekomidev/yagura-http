@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { Yagura } from '@yagura/yagura';
-import { HttpServerConfig, HttpServerService } from '../src';
+import { ErrorResponseBodyType, HttpServerConfig, HttpServerService } from '../src';
 
 import { Server } from 'node:http';
 import { AddressInfo } from 'net';
@@ -10,7 +10,6 @@ import 'mocha';
 import * as sinon from 'sinon';
 import * as chai from 'chai';
 import chaiHttp = require('chai-http');
-import { ErrorResponseBodyType } from '../src/request';
 const expect = chai.expect;
 
 // import 'clarify';

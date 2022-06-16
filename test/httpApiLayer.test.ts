@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import { Yagura } from '@yagura/yagura';
+import { Logger, LogLevel, Yagura } from '@yagura/yagura';
 import { HttpApiLayer, HttpRouter, HttpServerConfig, HttpServerService, HttpRequest, CrudAdapter, CrudResponse, HttpError, ErrorResponseBodyType } from '../src';
 
 import 'mocha';
-// import * as sinon from 'sinon';
+import * as sinon from 'sinon';
 import * as chai from 'chai';
 import chaiHttp = require('chai-http');
 const expect = chai.expect;
@@ -251,6 +251,98 @@ describe('HttpApiLayer', () => {
             .delete('/my-route');
 
         expect(res).to.have.status(405);
+    });
+
+    it('should support specifying error logging level by the error code range', async () => {
+        const service = new HttpServerService({ ...config, errorLogTypes: [{ range: 400, level: LogLevel.warn }] });
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+    });
+
+    it('should support specifying error logging level by the error code', async () => {
+        const service = new HttpServerService({ ...config, errorLogTypes: [{ code: 404, level: LogLevel.warn }] });
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+    });
+
+    it('should support specifying error logging level by the error type', async () => {
+        const service = new HttpServerService({ ...config, errorLogTypes: [{ type: 'not_found', level: LogLevel.warn }] });
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+    });
+
+    it('should support specifying multiple filtering parameters', async () => {
+        const service = new HttpServerService({
+            ...config,
+            errorLogTypes: [{ code: 404, level: LogLevel.warn }, { code: 404, type: 'not_found', level: LogLevel.info }]
+        });
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'info');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+    });
+
+    it('should support specifying multiple error logging configurations', async () => {
+        const service = new HttpServerService({
+            ...config,
+            errorLogTypes: [{ range: 400, level: LogLevel.warn }, { range: 500, level: LogLevel.error }]
+        });
+
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'error');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+        expect(spy2.called).to.be.eq(false);
+    });
+
+    it('should log errors as such with the default configuration', async () => {
+        const service = new HttpServerService();
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'error');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+    });
+
+    it('should respect logging level order priority', async () => {
+        const service = new HttpServerService({
+            ...config,
+            errorLogTypes: [{ code: 404, level: LogLevel.error }, { type: 'not_found', level: LogLevel.warn }]
+        });
+
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'error');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(false);
+        expect(spy2.called).to.be.eq(true);
     });
 
     // CrudAdapter

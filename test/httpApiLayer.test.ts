@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { Yagura } from '@yagura/yagura';
-import { HttpApiLayer, HttpRouter, HttpServerConfig, HttpServerService, HttpRequest, CrudAdapter, CrudResponse, HttpError } from '../src';
+import { HttpApiLayer, HttpRouter, HttpServerConfig, HttpServerService, HttpRequest, CrudAdapter, CrudResponse, HttpError, ErrorResponseBodyType } from '../src';
 
 import 'mocha';
 // import * as sinon from 'sinon';
 import * as chai from 'chai';
 import chaiHttp = require('chai-http');
-import { ErrorResponseBodyType } from '../src/request';
 const expect = chai.expect;
 
 // import 'clarify';

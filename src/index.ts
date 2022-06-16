@@ -1,6 +1,6 @@
-import { ErrorResponseBodyType, HttpRequest } from './request';
+import { HttpRequest } from './request';
 import { HttpRouter, HttpRoute, CrudAdapter, CrudResponse, HttpMethod, HttpRouteCallback, HttpRouteFormattingError } from './routes';
-import { HttpServerService, HttpServerConfig } from './httpServer.service';
+import { HttpServerService, HttpServerConfig, ErrorResponseBodyType } from './httpServer.service';
 import { HttpApiLayer, HttpApiConfig } from './httpApi.layer';
 import { HttpError, HttpErrorType } from './errors/http.error';
 

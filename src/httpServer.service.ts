@@ -1,6 +1,6 @@
 import { Service, Logger, promiseTimeout } from '@yagura/yagura';
 import { HttpError, HttpErrorType } from './errors/http.error';
-import { ErrorResponseBodyType, HttpRequest } from './request';
+import { HttpRequest } from './request';
 
 import { Express as ExpressApp } from 'express';
 import * as express from 'express';
@@ -16,6 +16,12 @@ export interface HttpServerConfig {
     defaultError: string | number;
     expressSettings?: {[key: string]: any};
     errorBodyContent: ErrorResponseBodyType;
+
+export enum ErrorResponseBodyType {
+    Object,
+    Type,
+    Message
+}
 }
 
 const defaultConfig: HttpServerConfig = {

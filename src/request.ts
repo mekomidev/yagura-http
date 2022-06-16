@@ -6,13 +6,6 @@ import { Response, Request } from 'express';
 export interface HttpEventData {
     req: Request;
     res: Response;
-    errorBodyType: ErrorResponseBodyType;
-}
-
-export enum ErrorResponseBodyType {
-    Object,
-    Type,
-    Message
 }
 
 /**

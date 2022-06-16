@@ -93,7 +93,15 @@ describe('HttpApiLayer', () => {
         public declareRoutes(router: HttpRouter) {
             router.route('/error').get(() => {
                 throw this.errorObject;
-            })
+            });
+
+            router.route('/error-500').get(() => {
+                throw new HttpError({
+                    code: 500,
+                    type: 'internal_error',
+                    message: 'internal server error'
+                });
+            });
         }
     }
 
@@ -300,7 +308,32 @@ describe('HttpApiLayer', () => {
         expect(spy.called).to.be.eq(true);
     });
 
-    it('should support specifying multiple error logging configurations', async () => {
+    it('should support specifying multiple error logging configurations by code', async () => {
+        const service = new HttpServerService({
+            ...config,
+            errorLogTypes: [{ code: 404, level: LogLevel.warn }, { code: 500, level: LogLevel.error }]
+        });
+
+        app = await Yagura.start([new HttpErrorBodyApiLayer()], [service]);
+
+        const spy = sinon.spy(app.getService<Logger>('Logger'), 'warn');
+        const spy2 = sinon.spy(app.getService<Logger>('Logger'), 'error');
+
+        await chai.request((service as any)._express).get('/error');
+
+        expect(spy.called).to.be.eq(true);
+        expect(spy2.called).to.be.eq(false);
+
+        spy.resetHistory();
+        spy2.resetHistory();
+
+        await chai.request((service as any)._express).get('/error-500');
+
+        expect(spy.called).to.be.eq(false);
+        expect(spy2.called).to.be.eq(true);
+    });
+
+    it('should support specifying multiple error logging configurations by range', async () => {
         const service = new HttpServerService({
             ...config,
             errorLogTypes: [{ range: 400, level: LogLevel.warn }, { range: 500, level: LogLevel.error }]
@@ -315,6 +348,14 @@ describe('HttpApiLayer', () => {
 
         expect(spy.called).to.be.eq(true);
         expect(spy2.called).to.be.eq(false);
+
+        spy.resetHistory();
+        spy2.resetHistory();
+
+        await chai.request((service as any)._express).get('/error-500');
+
+        expect(spy.called).to.be.eq(false);
+        expect(spy2.called).to.be.eq(true);
     });
 
     it('should log errors as such with the default configuration', async () => {

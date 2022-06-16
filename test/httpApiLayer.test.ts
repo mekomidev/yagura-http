@@ -446,7 +446,7 @@ describe('HttpApiLayer', () => {
                 return Promise.resolve(res);
             }
             public getOne(id: any): Promise<CrudResponse<number>> {
-                id = Number.parseInt(id, 10);
+                id = Number.parseInt(id as string, 10);
                 let res;
                 const result: number = this.data[id];
                 if(result === undefined) {
@@ -464,7 +464,7 @@ describe('HttpApiLayer', () => {
                 return Promise.resolve(res);
             }
             public update(id: any, input: Partial<number>): Promise<CrudResponse<number>> {
-                id = Number.parseInt(id, 10);
+                id = Number.parseInt(id as string, 10);
                 let res;
                 if(this.data[id] !== undefined) {
                     this.data[id] = input;
@@ -476,7 +476,7 @@ describe('HttpApiLayer', () => {
                 return Promise.resolve(res);
             }
             public delete(id: any): Promise<CrudResponse<number | void>> {
-                id = Number.parseInt(id, 10);
+                id = Number.parseInt(id as string, 10);
                 let res;
                 if(this.data[id] !== undefined) {
                     res = { code: 200 }

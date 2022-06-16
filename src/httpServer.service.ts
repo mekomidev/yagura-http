@@ -30,7 +30,7 @@ const defaultConfig: HttpServerConfig = {
 const defaultErrors: HttpErrorType[] = [
     {
         type: 'timeout',
-        code: 0,
+        code: 408,
         message: "The connection was interrupted or has timed out"
     },
     {
